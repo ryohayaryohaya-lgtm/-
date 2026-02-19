@@ -1,23 +1,3 @@
-from flask import Flask, render_template_string
-
-app = Flask(__name__)
-
-NOTE_NAMES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"]
-BLACK_PCS = {1, 3, 6, 8, 10}
-
-FRETS = 22
-
-# Piano range (supports bass low B0)
-MIN_MIDI = 23  # B0
-MAX_MIDI = 84  # C6
-
-# Tunings (MIDI open strings)
-GUITAR_6 = {6: 40, 5: 45, 4: 50, 3: 55, 2: 59, 1: 64}  # EADGBE
-BASS_4   = {4: 28, 3: 33, 2: 38, 1: 43}                # E1 A1 D2 G2
-BASS_5   = {5: 23, 4: 28, 3: 33, 2: 38, 1: 43}         # B0 E1 A1 D2 G2
-BASS_6   = {6: 23, 5: 28, 4: 33, 3: 38, 2: 43, 1: 48}  # B0 E1 A1 D2 G2 C3
-
-HTML = r"""
 <!doctype html>
 <html lang="ja">
 <head>
@@ -34,11 +14,11 @@ HTML = r"""
   --glow: 0 0 10px rgba(255,255,255,.45), 0 0 22px rgba(255,255,255,.25);
   --glowStrong: 0 0 12px rgba(255,255,255,.70), 0 0 30px rgba(255,255,255,.40);
 
-  /* Bigger fretboard */
+  /* fretboard */
   --cellW: 40px;
   --cellH: 34px;
   --fretW: 46px;
-  --spacerH: 34px; /* 0-1 gap */
+  --spacerH: 34px; /* gap between 0 and 1 */
 
   /* piano */
   --pW: 190px;
@@ -46,6 +26,9 @@ HTML = r"""
   --whiteH: 14px;
   --blackH: 11px;
   --blackW: 132px;
+
+  /* X buttons */
+  --xW: 58px;
 
   --radius: 18px;
 }
@@ -127,7 +110,13 @@ select:hover, .btn:hover, input:hover, label:hover{
 }
 .toggle input{ width:18px; height:18px; cursor:pointer; }
 
-.main{ display:flex; gap:14px; align-items:flex-start; }
+.main{ display:flex; gap:14px; align-items:flex-start; flex-wrap:nowrap; overflow-x:auto; padding-bottom:8px; }
+.main::-webkit-scrollbar{ height:10px; }
+.main::-webkit-scrollbar-thumb{
+  background: rgba(255,255,255,.22);
+  border-radius:999px;
+  border:2px solid rgba(0,0,0,.55);
+}
 
 .panel{
   border-radius:var(--radius);
@@ -149,7 +138,7 @@ select:hover, .btn:hover, input:hover, label:hover{
 
 .fret-piano{ display:flex; gap:12px; align-items:flex-start; }
 
-/* mute strip */
+/* mute strip (dots summary) */
 .mute-strip{ display:flex; align-items:center; gap:8px; margin: 0 0 10px 0; }
 .mute-x{
   width:18px; text-align:center; font-weight:1000; text-shadow: var(--glow);
@@ -174,7 +163,12 @@ select:hover, .btn:hover, input:hover, label:hover{
   box-shadow: 0 0 16px rgba(255,255,255,.40);
 }
 
-/* header labels */
+/* header: strings + X buttons */
+.headerwrap{
+  display:flex;
+  gap:10px;
+  align-items:stretch;
+}
 .strings-row{
   display:grid;
   grid-template-columns: var(--fretW) repeat(6, var(--cellW));
@@ -195,8 +189,61 @@ select:hover, .btn:hover, input:hover, label:hover{
 .slabwrap.muted{ opacity:.40; background: rgba(255,255,255,.06); }
 .slabwrap.mutedGlow{ opacity:.55; box-shadow: 0 0 18px rgba(255,255,255,.40); border-color: rgba(255,255,255,.40); }
 
+/* per-string mute X buttons (outside fretboard) */
+.xcol{
+  width: var(--xW);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.xbtn{
+  width: var(--xW);
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.22);
+  background: rgba(0,0,0,.35);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:8px 0 10px;
+  cursor:pointer;
+  user-select:none;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.12);
+  transition: box-shadow .18s ease, border-color .18s ease, transform .06s ease;
+  touch-action: manipulation;
+}
+.xbtn .x{
+  font-size:18px;
+  font-weight:1000;
+  line-height:1;
+}
+.xbtn .lbl{
+  margin-top:6px;
+  font-size:12px;
+  font-weight:1000;
+  opacity:.9;
+}
+.xbtn:hover{
+  border-color: rgba(255,255,255,.55);
+  box-shadow: var(--glow);
+}
+.xbtn:active{ transform: translateY(1px); }
+.xbtn.on{
+  border-color: rgba(255,255,255,.70);
+  box-shadow: var(--glowStrong);
+  background: rgba(255,255,255,.12);
+}
+.xbtn.disabled{
+  opacity:.20;
+  pointer-events:none;
+}
+
 /* scroll */
-.scroll{ max-height: 78vh; overflow:auto; padding-right:6px; }
+.scroll{
+  max-height: 78vh;
+  overflow:auto;
+  padding-right:6px;
+}
 .scroll::-webkit-scrollbar{ width:10px; }
 .scroll::-webkit-scrollbar-thumb{
   background: rgba(255,255,255,.22);
@@ -205,7 +252,12 @@ select:hover, .btn:hover, input:hover, label:hover{
 }
 .scroll::-webkit-scrollbar-track{ background: rgba(0,0,0,.35); border-radius:999px; }
 
-/* board */
+/* board + sticky X column */
+.fretwrap{
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+}
 .board{
   display:grid;
   grid-template-columns: var(--fretW) repeat(6, var(--cellW));
@@ -220,6 +272,15 @@ select:hover, .btn:hover, input:hover, label:hover{
     0 0 18px rgba(255,255,255,.08);
   background: rgba(0,0,0,.25);
 }
+
+/* sticky xcol inside scroll (keeps visible while scrolling frets) */
+.xcol-sticky{
+  position: sticky;
+  top: 0;
+  align-self:flex-start;
+  padding-top: 0;
+}
+
 .fret{
   display:flex;
   align-items:center;
@@ -243,6 +304,7 @@ select:hover, .btn:hover, input:hover, label:hover{
   border-right:1px solid rgba(255,255,255,.18);
   border-bottom:1px solid rgba(255,255,255,.10);
   transition: background .12s ease, box-shadow .12s ease;
+  touch-action: manipulation; /* reduce double-tap zoom */
 }
 .cell::before{
   content:"";
@@ -306,7 +368,7 @@ select:hover, .btn:hover, input:hover, label:hover{
 /* piano */
 .piano{
   width:var(--pW);
-  height: calc(({{MAX_MIDI}} - {{MIN_MIDI}} + 1) * var(--stepH));
+  height: 100%;
   position:relative;
   background: rgba(255,255,255,.05);
   border:1px solid rgba(255,255,255,.22);
@@ -332,7 +394,7 @@ select:hover, .btn:hover, input:hover, label:hover{
 .key-black{
   position:absolute;
   left:0;
-  width:132px;
+  width:var(--blackW);
   height:var(--blackH);
   background: rgba(0,0,0,.95);
   border:1px solid rgba(255,255,255,.34);
@@ -378,6 +440,7 @@ select:hover, .btn:hover, input:hover, label:hover{
   font-size:14px;
   cursor:pointer;
   transition: transform .06s ease, box-shadow .2s ease, border-color .2s ease;
+  touch-action: manipulation;
 }
 .cbtn:hover{ border-color: rgba(255,255,255,.55); box-shadow: var(--glow); }
 .cbtn:active{ transform: translateY(1px); }
@@ -396,13 +459,54 @@ select:hover, .btn:hover, input:hover, label:hover{
 .badge.ok{ box-shadow: 0 0 14px rgba(255,255,255,.35); }
 .badge.ng{ opacity:.7; }
 
-@media (max-width: 1120px){
-  .main{ flex-direction:column; }
-  .right-col{ max-width: unset; }
-  .chordgrid{ grid-template-columns: repeat(4, 1fr); }
+/* ======== Mobile optimization ======== */
+@media (max-width: 900px){
+  :root{
+    --cellW: 44px;
+    --cellH: 40px;
+    --fretW: 52px;
+    --spacerH: 40px;
+    --pW: 170px;
+    --stepH: 15px;
+    --whiteH: 15px;
+    --blackH: 12px;
+    --blackW: 128px;
+    --xW: 62px;
+  }
+  .wrap{ padding: 10px; }
+  h1{ font-size:20px; }
+  select, .btn, input, label{ font-size:15px; padding:12px 12px; border-radius:16px; }
+  .panel-title{ font-size:14px; }
+  .xbtn .x{ font-size:20px; }
+  .xbtn .lbl{ font-size:13px; }
 }
-@media (max-width: 640px){
-  .chordgrid{ grid-template-columns: repeat(3, 1fr); }
+
+@media (max-width: 720px){
+  /* stack panels vertically (avoid sideways scroll for mobile) */
+  .main{
+    flex-direction: column;
+    overflow-x: visible;
+  }
+  .right-col{
+    min-width: unset;
+    max-width: unset;
+    width: 100%;
+  }
+  .panel{ width:100%; }
+  .fret-piano{ gap:10px; }
+  .chordgrid{ grid-template-columns: repeat(2, 1fr); }
+  .cbtn{ padding:14px 10px; font-size:16px; border-radius:18px; }
+  .scroll{ max-height: 62vh; }
+}
+
+@media (max-width: 420px){
+  :root{
+    --cellW: 46px;
+    --cellH: 44px;
+    --fretW: 56px;
+    --xW: 66px;
+  }
+  .chordgrid{ grid-template-columns: 1fr; }
 }
 </style>
 </head>
@@ -425,12 +529,7 @@ select:hover, .btn:hover, input:hover, label:hover{
         <option value="-2">全音下げ</option>
       </select>
 
-      <select id="capoSel" title="仮想カポ（ギターのみ）">
-        <option value="0">カポなし</option>
-        {% for i in range(1, 13) %}
-          <option value="{{i}}">カポ{{i}}</option>
-        {% endfor %}
-      </select>
+      <select id="capoSel" title="仮想カポ（ギターのみ）"></select>
 
       <select id="voicingSel" title="押さえ方（一般的）">
         <option value="open">OPEN優先</option>
@@ -450,9 +549,9 @@ select:hover, .btn:hover, input:hover, label:hover{
       </label>
 
       <select id="bassNoteSel" title="オンコードのベース音" style="display:none;"></select>
-
       <select id="bassFollowSel" title="ベース：ルート追従する弦" style="display:none;"></select>
 
+      <button class="btn" id="btnShare" type="button" title="URLをコピー">共有URL</button>
       <button class="btn" id="btnClear" type="button">クリア</button>
     </div>
   </div>
@@ -468,41 +567,15 @@ select:hover, .btn:hover, input:hover, label:hover{
             <div class="mute-x" id="muteX">X</div>
           </div>
 
-          <div class="strings-row">
-            <div></div>
-            {% for s in [6,5,4,3,2,1] %}
-              <div class="slabwrap" id="slw{{s}}">
-                <div class="openname" id="open{{s}}">—</div>
-                <div class="slab">{{s}}</div>
-              </div>
-            {% endfor %}
+          <div class="headerwrap">
+            <div class="strings-row" id="stringsRow"></div>
+            <div class="xcol" id="xColHeader"></div>
           </div>
 
-          <div class="scroll">
-            <div class="board" id="board">
-              <!-- fret 0 -->
-              <div class="fret openrow">0</div>
-              {% for s in [6,5,4,3,2,1] %}
-                <div class="cell openrow" data-string="{{s}}" data-fret="0"></div>
-              {% endfor %}
-
-              <!-- spacer -->
-              <div class="spacer left"></div>
-              {% for _ in range(6) %}
-                <div class="spacer"></div>
-              {% endfor %}
-
-              <!-- frets 1..22 -->
-              {% for f in range(1, FRETS+1) %}
-                <div class="fret">{{f}}</div>
-                {% for s in [6,5,4,3,2,1] %}
-                  {% set has_dot = f in [3,5,7,9,15,17,19,21] %}
-                  {% set is_double = f in [12] %}
-                  <div class="cell {% if is_double %}double{% endif %}" data-string="{{s}}" data-fret="{{f}}">
-                    {% if has_dot %}<span class="posmark"></span>{% endif %}
-                  </div>
-                {% endfor %}
-              {% endfor %}
+          <div class="scroll" id="scrollArea">
+            <div class="fretwrap">
+              <div class="board" id="board"></div>
+              <div class="xcol xcol-sticky" id="xColSticky"></div>
             </div>
           </div>
         </div>
@@ -518,13 +591,14 @@ select:hover, .btn:hover, input:hover, label:hover{
         <div class="panel-title">コード一覧（一般的な押さえ方のみ / 押さえられないものは非表示）</div>
         <div class="panel-body">
           <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-            <input id="searchBox" placeholder="検索 (例: C5, C#dim, Bb7, C/E)" style="flex:1; min-width:240px;">
-            <select id="qualitySel" title="絞り込み">
-              <option value="all">すべて</option>
-            </select>
+            <input id="searchBox" placeholder="検索 (例: C5, C#dim, Bb7, C/E)" style="flex:1; min-width:220px;">
+            <select id="qualitySel" title="絞り込み"></select>
           </div>
           <div style="margin-top:10px; color:rgba(255,255,255,.88); font-weight:900; font-size:13px;">
-            クリックで自動入力 / ダブルクリックで解除（ベースは<b>ルートのみ</b>）
+            指板セル：クリックで入力 / 同じ場所クリックでミュート<br>
+            右の <b>X</b>：弦ごとミュート切替（発光＝ミュート）<br>
+            コード：クリックで自動入力 / ダブルクリックで解除（ベースは<b>ルートのみ</b>）<br>
+            共有：右上「共有URL」で状態つきURLコピー
           </div>
           <div class="chordlist" style="margin-top:10px;">
             <div class="chordgrid" id="chordGrid"></div>
@@ -537,59 +611,125 @@ select:hover, .btn:hover, input:hover, label:hover{
 </div>
 
 <script>
-/* ---------------- basics ---------------- */
-const NOTE_NAMES = {{ NOTE_NAMES|tojson }};
-const BLACK_PCS = new Set({{ black_pcs|tojson }});
-const MIN_MIDI = {{ MIN_MIDI }};
-const MAX_MIDI = {{ MAX_MIDI }};
-const FRETS = {{ FRETS }};
+/* ===================== CONFIG ===================== */
+const NOTE_NAMES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+const BLACK_PCS = new Set([1,3,6,8,10]);
+const FRETS = 22;
 
-const GUITAR_6 = {{ guitar6|tojson }};
-const BASS_4   = {{ bass4|tojson }};
-const BASS_5   = {{ bass5|tojson }};
-const BASS_6   = {{ bass6|tojson }};
+// Piano range: include low B0 for bass 5/6
+const MIN_MIDI = 23; // B0
+const MAX_MIDI = 84; // C6
+
+// Tunings (MIDI open strings)
+const GUITAR_6 = {6:40,5:45,4:50,3:55,2:59,1:64};
+const BASS_4   = {4:28,3:33,2:38,1:43};
+const BASS_5   = {5:23,4:28,3:33,2:38,1:43};
+const BASS_6   = {6:23,5:28,4:33,3:38,2:43,1:48};
 
 const ALL_COLS = [6,5,4,3,2,1];
 
-function mod(n,m){ return ((n%m)+m)%m; }
-function isBlack(midi){ return BLACK_PCS.has(midi % 12); }
-function midiToName(midi){
-  const note = NOTE_NAMES[midi % 12];
-  const oct = Math.floor(midi / 12) - 1;
-  return `${note}${oct}`;
-}
-function pcToName(pc){ return NOTE_NAMES[mod(pc,12)]; }
-function nameToPc(n){ return NOTE_NAMES.indexOf(n); }
+/* ===================== HELPERS ===================== */
+const mod = (n,m)=>((n%m)+m)%m;
+const isBlack = (m)=>BLACK_PCS.has(m%12);
+const pcToName = (pc)=>NOTE_NAMES[mod(pc,12)];
+const nameToPc = (name)=>NOTE_NAMES.indexOf(name);
+const midiToName = (midi)=>{
+  const n = NOTE_NAMES[midi%12];
+  const oct = Math.floor(midi/12)-1;
+  return `${n}${oct}`;
+};
+const midiToFreq = (midi)=>440*Math.pow(2,(midi-69)/12);
 
-/* ---------------- state ---------------- */
-let instrument = "guitar"; // guitar | bass4 | bass5 | bass6
-let tuneOffset = 0;        // 0, -1, -2
+/* ===================== STATE ===================== */
+let instrument = "guitar"; // guitar|bass4|bass5|bass6
+let tuneOffset = 0;        // 0|-1|-2
 let capo = 0;              // 0..12 (guitar only)
-let voicingPref = "open";  // open | barreE | barreA
+let voicingPref = "open";  // open|barreE|barreA
 let slashMode = false;
-let slashBassPc = 4;       // default E
-let powerRootPref = "auto"; // auto | "6" | "5"
-
-let bassFollowString = 6;  // user chosen (in bass modes)
+let slashBassPc = nameToPc("E");
+let powerRootPref = "auto"; // auto|"6"|"5"
+let bassFollowString = 6;
 
 let baseTuning = structuredClone(GUITAR_6);
 let activeStrings = [6,5,4,3,2,1];
 
-/* per string one position; null=muted */
+// per string: fret number or null=mute
 const selectedByString = new Map();
 function resetSelected(){
   selectedByString.clear();
-  ALL_COLS.forEach(s => selectedByString.set(s, null));
+  ALL_COLS.forEach(s=>selectedByString.set(s,null));
 }
 resetSelected();
 
-/* ---------------- audio: poko click ---------------- */
+/* ============ URL state (hash) ============ */
+let saveTimer = null;
+function scheduleSave(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveStateToHash, 120);
+}
+function saveStateToHash(){
+  const params = new URLSearchParams();
+  params.set("i", instrument);
+  params.set("t", String(tuneOffset));
+  params.set("c", String(capo));
+  params.set("v", voicingPref);
+  params.set("p", powerRootPref);
+  params.set("s", slashMode ? "1":"0");
+  params.set("b", pcToName(slashBassPc));
+  params.set("bf", String(bassFollowString));
+
+  const parts = [];
+  for(const s of ALL_COLS){
+    if(!activeStrings.includes(s)) continue;
+    const f = selectedByString.get(s);
+    parts.push(`${s}:${f===null?"x":f}`);
+  }
+  params.set("pos", parts.join("|"));
+
+  const newHash = "#" + params.toString();
+  if(location.hash !== newHash){
+    history.replaceState(null, "", newHash);
+  }
+}
+function loadStateFromHash(){
+  if(!location.hash || location.hash.length<2) return false;
+  const raw = location.hash.slice(1);
+  const params = new URLSearchParams(raw);
+
+  const i = params.get("i"); if(i) instrument = i;
+  const t = params.get("t"); if(t!==null && t!=="") tuneOffset = Number(t);
+  const c = params.get("c"); if(c!==null && c!=="") capo = Number(c);
+  const v = params.get("v"); if(v) voicingPref = v;
+  const p = params.get("p"); if(p) powerRootPref = p;
+  const s = params.get("s"); if(s) slashMode = (s==="1");
+  const b = params.get("b"); if(b && NOTE_NAMES.includes(b)) slashBassPc = nameToPc(b);
+  const bf = params.get("bf"); if(bf!==null && bf!=="") bassFollowString = Number(bf);
+
+  const pos = params.get("pos");
+  if(pos){
+    resetSelected();
+    const pairs = pos.split("|").map(x=>x.trim()).filter(Boolean);
+    for(const pr of pairs){
+      const [ss, ff] = pr.split(":");
+      const sNum = Number(ss);
+      if(!Number.isFinite(sNum)) continue;
+      if(ff==="x"){
+        selectedByString.set(sNum, null);
+      }else{
+        const fNum = Number(ff);
+        if(Number.isFinite(fNum)) selectedByString.set(sNum, fNum);
+      }
+    }
+  }
+  return true;
+}
+
+/* ===================== AUDIO (POKO) ===================== */
 let audioCtx = null;
 function getCtx(){
-  if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
   return audioCtx;
 }
-function midiToFreq(midi){ return 440*Math.pow(2,(midi-69)/12); }
 function poko(freq, duration=0.12){
   const ctx = getCtx();
   const now = ctx.currentTime;
@@ -610,25 +750,184 @@ function poko(freq, duration=0.12){
   gain.gain.exponentialRampToValueAtTime(0.9, now + 0.005);
   gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
 
-  osc.connect(filt);
-  filt.connect(gain);
-  gain.connect(ctx.destination);
-
+  osc.connect(filt); filt.connect(gain); gain.connect(ctx.destination);
   osc.start(now);
   osc.stop(now + duration + 0.02);
 }
 
-/* ---------------- tuning ---------------- */
+/* ===================== TUNING ===================== */
 function currentTuning(){
   const t = {};
-  const capoOffset = (instrument === "guitar") ? capo : 0;
+  const capoOffset = (instrument==="guitar") ? capo : 0;
   for(const s of activeStrings){
     t[s] = baseTuning[s] + tuneOffset + capoOffset;
   }
   return t;
 }
 
-/* ---------------- piano UI (no sound) ---------------- */
+/* ===================== UI BUILDERS ===================== */
+function pulseCell(cell){
+  cell.classList.remove('pulse'); void cell.offsetWidth; cell.classList.add('pulse');
+}
+
+function buildCapoSel(){
+  const sel = document.getElementById('capoSel');
+  sel.innerHTML = "";
+  const opt0 = document.createElement('option');
+  opt0.value = "0"; opt0.textContent = "カポなし";
+  sel.appendChild(opt0);
+  for(let i=1;i<=12;i++){
+    const o = document.createElement('option');
+    o.value = String(i); o.textContent = `カポ${i}`;
+    sel.appendChild(o);
+  }
+}
+
+function buildQualitySel(){
+  const sel = document.getElementById('qualitySel');
+  sel.innerHTML = "";
+  const o0 = document.createElement('option');
+  o0.value="all"; o0.textContent="すべて";
+  sel.appendChild(o0);
+  QUALITIES.forEach(q=>{
+    const o=document.createElement('option');
+    o.value=q.id; o.textContent=q.id;
+    sel.appendChild(o);
+  });
+}
+
+function buildBassNoteSel(){
+  const sel = document.getElementById('bassNoteSel');
+  sel.innerHTML="";
+  NOTE_NAMES.forEach(n=>{
+    const o=document.createElement('option');
+    o.value=n; o.textContent=n;
+    sel.appendChild(o);
+  });
+}
+
+function repopulateBassFollowSel(){
+  const sel = document.getElementById('bassFollowSel');
+  sel.innerHTML = "";
+  const strings = [...activeStrings].sort((a,b)=>b-a);
+  strings.forEach(s=>{
+    const o=document.createElement('option');
+    o.value=String(s);
+    o.textContent=`${s}弦でルート`;
+    sel.appendChild(o);
+  });
+}
+
+function buildStringsHeaderAndX(){
+  const row = document.getElementById('stringsRow');
+  row.innerHTML = "";
+
+  // left blank cell
+  const left = document.createElement('div');
+  left.textContent = "";
+  row.appendChild(left);
+
+  const tuning = currentTuning();
+  for(const s of ALL_COLS){
+    const wrap = document.createElement('div');
+    wrap.className = "slabwrap";
+    wrap.id = `slw${s}`;
+
+    const open = document.createElement('div');
+    open.className = "openname";
+    open.id = `open${s}`;
+    open.textContent = activeStrings.includes(s) ? midiToName(tuning[s]) : "—";
+
+    const slab = document.createElement('div');
+    slab.className = "slab";
+    slab.textContent = `${s}`;
+
+    wrap.appendChild(open);
+    wrap.appendChild(slab);
+    row.appendChild(wrap);
+  }
+
+  // build X buttons (header + sticky)
+  const h = document.getElementById('xColHeader');
+  const st = document.getElementById('xColSticky');
+  h.innerHTML = "";
+  st.innerHTML = "";
+  for(const s of ALL_COLS){
+    const make = (idPrefix)=>{
+      const btn = document.createElement('div');
+      btn.className = "xbtn";
+      btn.id = `${idPrefix}${s}`;
+      btn.dataset.string = String(s);
+
+      const x = document.createElement('div');
+      x.className = "x";
+      x.textContent = "X";
+      const lbl = document.createElement('div');
+      lbl.className = "lbl";
+      lbl.textContent = `${s}弦`;
+
+      btn.appendChild(x);
+      btn.appendChild(lbl);
+      return btn;
+    };
+    h.appendChild(make("xH"));
+    st.appendChild(make("xS"));
+  }
+}
+
+function buildBoard(){
+  const board = document.getElementById('board');
+  board.innerHTML = "";
+
+  // fret 0 row
+  const fret0 = document.createElement('div');
+  fret0.className = "fret openrow";
+  fret0.textContent = "0";
+  board.appendChild(fret0);
+
+  for(const s of ALL_COLS){
+    const c = document.createElement('div');
+    c.className = "cell openrow";
+    c.dataset.string = String(s);
+    c.dataset.fret = "0";
+    board.appendChild(c);
+  }
+
+  // spacer row
+  const spL = document.createElement('div');
+  spL.className = "spacer left";
+  board.appendChild(spL);
+  for(let i=0;i<6;i++){
+    const sp = document.createElement('div');
+    sp.className="spacer";
+    board.appendChild(sp);
+  }
+
+  // frets 1..22
+  const dotFrets = new Set([3,5,7,9,15,17,19,21]);
+  for(let f=1; f<=FRETS; f++){
+    const fr = document.createElement('div');
+    fr.className="fret";
+    fr.textContent=String(f);
+    board.appendChild(fr);
+
+    for(const s of ALL_COLS){
+      const cell = document.createElement('div');
+      cell.className = "cell";
+      cell.dataset.string = String(s);
+      cell.dataset.fret = String(f);
+
+      if(f===12) cell.classList.add('double');
+      if(dotFrets.has(f)){
+        const pm=document.createElement('span');
+        pm.className="posmark";
+        cell.appendChild(pm);
+      }
+      board.appendChild(cell);
+    }
+  }
+}
+
 function buildPiano(){
   const piano = document.getElementById('piano');
   piano.innerHTML = "";
@@ -637,112 +936,130 @@ function buildPiano(){
   const whiteH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--whiteH'));
   const blackH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--blackH'));
 
-  for(let midi = MIN_MIDI; midi <= MAX_MIDI; midi++){
-    const y = (midi - MIN_MIDI) * stepH;
+  const total = (MAX_MIDI - MIN_MIDI + 1) * stepH;
+  piano.style.height = `${total}px`;
 
+  for(let midi=MIN_MIDI; midi<=MAX_MIDI; midi++){
+    const y = (midi - MIN_MIDI) * stepH;
     if(!isBlack(midi)){
-      const w = document.createElement('div');
-      w.className = 'key-white';
-      w.id = `key${midi}`;
+      const w=document.createElement('div');
+      w.className="key-white";
+      w.id=`key${midi}`;
       w.style.bottom = `${y}px`;
       w.style.height = `${whiteH}px`;
       w.textContent = midiToName(midi);
       piano.appendChild(w);
     }else{
-      const b = document.createElement('div');
-      b.className = 'key-black';
-      b.id = `key${midi}`;
+      const b=document.createElement('div');
+      b.className="key-black";
+      b.id=`key${midi}`;
       b.style.bottom = `${y + (whiteH-blackH)/2}px`;
       b.textContent = midiToName(midi);
       piano.appendChild(b);
     }
   }
 }
+
+/* ===================== UI UPDATE ===================== */
 function clearPianoActive(){
-  for(let midi = MIN_MIDI; midi <= MAX_MIDI; midi++){
-    const el = document.getElementById(`key${midi}`);
+  for(let midi=MIN_MIDI; midi<=MAX_MIDI; midi++){
+    const el=document.getElementById(`key${midi}`);
     if(el) el.classList.remove('active');
   }
 }
 function getSelectedMidis(){
-  const tuning = currentTuning();
-  const midis = [];
+  const tuning=currentTuning();
+  const midis=[];
   for(const s of ALL_COLS){
-    const f = selectedByString.get(s);
-    if(f === null) continue;
+    const f=selectedByString.get(s);
+    if(f===null) continue;
     if(!activeStrings.includes(s)) continue;
-    const midi = tuning[s] + f;
-    if(midi < MIN_MIDI || midi > MAX_MIDI) continue;
-    midis.push(midi);
+    const m = tuning[s] + f;
+    if(m<MIN_MIDI || m>MAX_MIDI) continue;
+    midis.push(m);
   }
   return Array.from(new Set(midis)).sort((a,b)=>a-b);
 }
-
-/* ---------------- UI helpers ---------------- */
-function pulseCell(cell){
-  cell.classList.remove('pulse');
-  void cell.offsetWidth;
-  cell.classList.add('pulse');
-}
-
 function updateMuteDots(){
-  const strip = document.getElementById('muteStrip');
-  const muteX = document.getElementById('muteX');
-  strip.querySelectorAll('.dot').forEach(d => d.remove());
+  const strip=document.getElementById('muteStrip');
+  const muteX=document.getElementById('muteX');
+  strip.querySelectorAll('.dot').forEach(d=>d.remove());
 
-  let anyMuted = false;
-
-  ALL_COLS.forEach(s=>{
-    const d = document.createElement('div');
-    const active = activeStrings.includes(s);
-    const muted = active && selectedByString.get(s) === null;
-    const on = active && !muted;
-    if(muted) anyMuted = true;
-    d.className = 'dot' + (on ? ' on' : '') + (muted ? ' mutedGlow' : '');
-    strip.appendChild(d);
-  });
-
-  if(anyMuted) muteX.classList.add('glow');
-  else muteX.classList.remove('glow');
-}
-
-function updateOpenNamesAndHeader(){
-  const tuning = currentTuning();
+  let anyMuted=false;
   for(const s of ALL_COLS){
-    const wrap = document.getElementById('slw'+s);
-    const openEl = document.getElementById('open'+s);
-    if(!wrap || !openEl) continue;
+    const d=document.createElement('div');
+    const active = activeStrings.includes(s);
+    const muted = active && selectedByString.get(s)===null;
+    const on = active && !muted;
+    if(muted) anyMuted=true;
+    d.className = 'dot' + (on?' on':'') + (muted?' mutedGlow':'');
+    strip.appendChild(d);
+  }
+  if(anyMuted) muteX.classList.add('glow'); else muteX.classList.remove('glow');
+}
+function updateOpenNamesAndHeader(){
+  const tuning=currentTuning();
+  for(const s of ALL_COLS){
+    const wrap=document.getElementById(`slw${s}`);
+    const open=document.getElementById(`open${s}`);
+    if(!wrap || !open) continue;
 
     if(!activeStrings.includes(s)){
       wrap.classList.add('disabled');
       wrap.classList.remove('muted','mutedGlow');
-      openEl.textContent = "—";
+      open.textContent="—";
       continue;
     }
-
     wrap.classList.remove('disabled');
-    openEl.textContent = midiToName(tuning[s]);
+    open.textContent = midiToName(tuning[s]);
 
-    if(selectedByString.get(s) === null){
+    if(selectedByString.get(s)===null){
       wrap.classList.add('muted','mutedGlow');
     }else{
       wrap.classList.remove('muted','mutedGlow');
     }
   }
 }
-
 function syncBoardMutedCols(){
   document.querySelectorAll('.cell').forEach(cell=>{
-    const s = Number(cell.dataset.string);
+    const s=Number(cell.dataset.string);
     if(!activeStrings.includes(s)){
       cell.classList.add('disabled');
       cell.classList.remove('mutedcol');
       return;
     }
     cell.classList.remove('disabled');
-    if(selectedByString.get(s) === null) cell.classList.add('mutedcol');
+    if(selectedByString.get(s)===null) cell.classList.add('mutedcol');
     else cell.classList.remove('mutedcol');
   });
+}
+function markSelectedCells(){
+  document.querySelectorAll('.cell.selected').forEach(el=>el.classList.remove('selected'));
+  for(const s of ALL_COLS){
+    const f = selectedByString.get(s);
+    if(f===null) continue;
+    const cell=document.querySelector(`.cell[data-string="${s}"][data-fret="${f}"]`);
+    if(cell) cell.classList.add('selected');
+  }
+}
+function updateXButtons(){
+  for(const s of ALL_COLS){
+    const muted = (selectedByString.get(s) === null);
+    const active = activeStrings.includes(s);
+
+    const h=document.getElementById(`xH${s}`);
+    const st=document.getElementById(`xS${s}`);
+    [h,st].forEach(btn=>{
+      if(!btn) return;
+      if(!active){
+        btn.classList.add('disabled');
+        btn.classList.remove('on');
+        return;
+      }
+      btn.classList.remove('disabled');
+      if(muted) btn.classList.add('on'); else btn.classList.remove('on');
+    });
+  }
 }
 
 function updateUI(){
@@ -751,52 +1068,21 @@ function updateUI(){
   syncBoardMutedCols();
 
   clearPianoActive();
-  const midis = getSelectedMidis();
-  midis.forEach(m=>{
-    const el = document.getElementById(`key${m}`);
+  const midis=getSelectedMidis();
+  for(const m of midis){
+    const el=document.getElementById(`key${m}`);
     if(el) el.classList.add('active');
-  });
+  }
+
+  updateXButtons();
+  scheduleSave();
 }
 
-/* ---------------- fret click ---------------- */
-document.addEventListener('click', (e)=>{
-  const cell = e.target.closest('.cell');
-  if(!cell) return;
-
-  const s = Number(cell.dataset.string);
-  const f = Number(cell.dataset.fret);
-  if(!activeStrings.includes(s)) return;
-
-  const cur = selectedByString.get(s);
-
-  // clear other selection in same string
-  document.querySelectorAll(`.cell.selected[data-string="${s}"]`)
-    .forEach(el=>el.classList.remove('selected'));
-
-  if(cur === f){
-    selectedByString.set(s, null);
-  }else{
-    selectedByString.set(s, f);
-    cell.classList.add('selected');
-    pulseCell(cell);
-
-    const tuning = currentTuning();
-    poko(midiToFreq(tuning[s] + f), 0.12);
-  }
-  updateUI();
-});
-
-document.getElementById('btnClear').addEventListener('click', ()=>{
-  ALL_COLS.forEach(s=>selectedByString.set(s,null));
-  document.querySelectorAll('.cell.selected').forEach(el=>el.classList.remove('selected'));
-  updateUI();
-});
-
-/* ---------------- chord engine (common chart-only) ---------------- */
+/* ===================== CHORD ENGINE (COMMON SHAPES ONLY) ===================== */
 const QUALITIES = [
   {id:"maj",  label:""},
   {id:"min",  label:"m"},
-  {id:"5",    label:"5"},      // power chord
+  {id:"5",    label:"5"},
   {id:"7",    label:"7"},
   {id:"maj7", label:"maj7"},
   {id:"m7",   label:"m7"},
@@ -804,8 +1090,9 @@ const QUALITIES = [
   {id:"sus4", label:"sus4"},
   {id:"6",    label:"6"},
   {id:"add9", label:"add9"},
-  {id:"dim",  label:"dim"},    // diminished
+  {id:"dim",  label:"dim"},
 ];
+const qualityLabel = (qid)=> (QUALITIES.find(x=>x.id===qid)?.label ?? "");
 
 const OPEN_FORMS = {
   "C:maj":  {6:null,5:3,4:2,3:0,2:1,1:0},
@@ -831,14 +1118,12 @@ const OPEN_FORMS = {
   "A:sus4": {6:null,5:0,4:2,3:2,2:3,1:0},
   "E:sus4": {6:0,5:2,4:2,3:2,2:0,1:0},
 
-  // one common dim-ish small shape
   "D:dim":  {6:null,5:null,4:0,3:1,2:0,1:1},
 };
 
-// Barre templates (common charts)
-// NOTE: power chord templates are split by rootString=6 vs 5
+// barre templates (include power chord split by rootString)
 const BARRE = [
-  // E-family (root on 6th string)
+  // E-family
   {family:"E", q:"maj",  rootString:6, offs:{6:0,5:2,4:2,3:1,2:0,1:0}},
   {family:"E", q:"min",  rootString:6, offs:{6:0,5:2,4:2,3:0,2:0,1:0}},
   {family:"E", q:"7",    rootString:6, offs:{6:0,5:2,4:0,3:1,2:0,1:0}},
@@ -849,9 +1134,9 @@ const BARRE = [
   {family:"E", q:"6",    rootString:6, offs:{6:0,5:2,4:2,3:1,2:2,1:0}},
   {family:"E", q:"add9", rootString:6, offs:{6:0,5:2,4:2,3:1,2:0,1:2}},
   {family:"E", q:"dim",  rootString:6, offs:{6:0,5:1,4:2,3:0,2:2,1:0}},
-  {family:"E", q:"5",    rootString:6, offs:{6:0,5:2,4:2,3:null,2:null,1:null}}, // power 6th root
+  {family:"E", q:"5",    rootString:6, offs:{6:0,5:2,4:2,3:null,2:null,1:null}},
 
-  // A-family (root on 5th string)
+  // A-family
   {family:"A", q:"maj",  rootString:5, offs:{6:null,5:0,4:2,3:2,2:2,1:0}},
   {family:"A", q:"min",  rootString:5, offs:{6:null,5:0,4:2,3:2,2:1,1:0}},
   {family:"A", q:"7",    rootString:5, offs:{6:null,5:0,4:2,3:0,2:2,1:0}},
@@ -862,13 +1147,8 @@ const BARRE = [
   {family:"A", q:"6",    rootString:5, offs:{6:null,5:0,4:2,3:2,2:2,1:2}},
   {family:"A", q:"add9", rootString:5, offs:{6:null,5:0,4:2,3:2,2:0,1:0}},
   {family:"A", q:"dim",  rootString:5, offs:{6:null,5:0,4:1,3:2,2:1,1:2}},
-  {family:"A", q:"5",    rootString:5, offs:{6:null,5:0,4:2,3:2,2:null,1:null}}, // power 5th root
+  {family:"A", q:"5",    rootString:5, offs:{6:null,5:0,4:2,3:2,2:null,1:null}},
 ];
-
-function qualityLabel(qid){
-  const q = QUALITIES.find(x=>x.id===qid);
-  return q ? q.label : "";
-}
 
 function soundingRootPc(rootPc){
   const semis = (instrument==="guitar") ? (capo + tuneOffset) : tuneOffset;
@@ -877,457 +1157,438 @@ function soundingRootPc(rootPc){
 function chordName(rootPc, qid){
   return pcToName(soundingRootPc(rootPc)) + qualityLabel(qid);
 }
-
 function voicingFromOpenForm(form){
   const v = {};
   for(const s of ALL_COLS){
     const f = form[s];
-    if(f === null || f === undefined) v[s] = null;
-    else if(f === 0) v[s] = 0;
+    if(f===null || f===undefined) v[s]=null;
+    else if(f===0) v[s]=0;
     else{
       const abs = capo + f;
-      if(abs > FRETS) return null;
-      v[s] = abs;
+      if(abs>FRETS) return null;
+      v[s]=abs;
     }
   }
   return v;
 }
-
 function voicingFromBarre(shape, barreFret){
   const v = {};
   for(const s of ALL_COLS){
     const o = shape.offs[s];
-    if(o === null || o === undefined) v[s] = null;
+    if(o===null || o===undefined) v[s]=null;
     else{
       const f = barreFret + o;
-      if(f < 0 || f > FRETS) return null;
-      v[s] = f;
+      if(f<0 || f>FRETS) return null;
+      v[s]=f;
     }
   }
   return v;
 }
-
 function isPlayableCommon(voicing){
-  const frets = [];
-  let count = 0;
+  const frets=[];
+  let count=0;
   for(const s of ALL_COLS){
-    const f = voicing[s];
-    if(f === null) continue;
-    count++;
-    frets.push(f);
+    const f=voicing[s];
+    if(f===null) continue;
+    count++; frets.push(f);
   }
-  if(count < 2) return false;
-  const minF = Math.min(...frets);
-  const maxF = Math.max(...frets);
-  if(maxF - minF > 5) return false;
-  if(minF > 17) return false;
+  if(count<2) return false;
+  const minF=Math.min(...frets), maxF=Math.max(...frets);
+  if(maxF-minF>5) return false;
+  if(minF>17) return false;
   return true;
 }
-
-/* bass note of a voicing: lowest sounding MIDI */
+function shapesForQuality(qid){
+  if(qid!=="5") return BARRE.filter(s=>s.q===qid);
+  if(powerRootPref==="6") return BARRE.filter(s=>s.q==="5" && s.rootString===6);
+  if(powerRootPref==="5") return BARRE.filter(s=>s.q==="5" && s.rootString===5);
+  return BARRE.filter(s=>s.q==="5");
+}
 function voicingLowestMidi(voicing){
-  const tuning = currentTuning();
-  let best = null;
+  const tuning=currentTuning();
+  let best=null;
   for(const s of ALL_COLS){
-    const f = voicing[s];
-    if(f === null) continue;
-    const midi = tuning[s] + f;
-    if(best === null || midi < best) best = midi;
+    const f=voicing[s];
+    if(f===null) continue;
+    const midi=tuning[s]+f;
+    if(best===null || midi<best) best=midi;
   }
   return best;
 }
 function voicingBassPc(voicing){
-  const m = voicingLowestMidi(voicing);
-  return (m===null) ? null : mod(m,12);
+  const m=voicingLowestMidi(voicing);
+  return (m===null)?null:mod(m,12);
 }
-
-/* power chord preference filtering */
-function shapesForQuality(qid){
-  if(qid !== "5") return BARRE.filter(s=>s.q===qid);
-
-  if(powerRootPref === "6") return BARRE.filter(s=>s.q==="5" && s.rootString===6);
-  if(powerRootPref === "5") return BARRE.filter(s=>s.q==="5" && s.rootString===5);
-  // auto: allow both
-  return BARRE.filter(s=>s.q==="5");
-}
-
 function generateCommonVoicings(rootPc, qid){
-  if(instrument !== "guitar") return [];
+  if(instrument!=="guitar") return [];
+  const tuning=currentTuning();
+  const out=[];
 
-  const tuning = currentTuning();
-  const out = [];
-
-  // open forms only for specific roots
-  const rootName = pcToName(rootPc);
-  const openKey = `${rootName}:${qid}`;
+  const openKey = `${pcToName(rootPc)}:${qid}`;
   if(OPEN_FORMS[openKey]){
-    const v = voicingFromOpenForm(OPEN_FORMS[openKey]);
+    const v=voicingFromOpenForm(OPEN_FORMS[openKey]);
     if(v && isPlayableCommon(v)) out.push({voicing:v, tag:"open"});
   }
 
-  // barre shapes
-  const shapes = shapesForQuality(qid);
+  const shapes=shapesForQuality(qid);
   for(const sh of shapes){
-    const rs = sh.rootString;
-    const openMidi = tuning[rs];
+    const rs=sh.rootString;
+    const openMidi=tuning[rs];
     for(let bf=0; bf<=FRETS; bf++){
-      const pc = mod(openMidi + bf, 12);
-      if(pc !== rootPc) continue;
-      const v = voicingFromBarre(sh, bf);
+      if(mod(openMidi+bf,12)!==rootPc) continue;
+      const v=voicingFromBarre(sh,bf);
       if(!v) continue;
       if(!isPlayableCommon(v)) continue;
       out.push({voicing:v, tag:`barre-${sh.family}`});
     }
   }
 
-  // de-dup
-  const seen = new Set();
-  const uniq = [];
+  const seen=new Set();
+  const uniq=[];
   for(const r of out){
-    const sig = ALL_COLS.map(s=> (r.voicing[s]===null?"x":r.voicing[s])).join("-");
+    const sig=ALL_COLS.map(s=>(r.voicing[s]===null?"x":r.voicing[s])).join("-");
     if(seen.has(sig)) continue;
     seen.add(sig);
     uniq.push(r);
   }
 
-  // sort by min fret
   uniq.sort((a,b)=>{
-    const ma = Math.min(...ALL_COLS.map(s=>a.voicing[s]).filter(x=>x!==null));
-    const mb = Math.min(...ALL_COLS.map(s=>b.voicing[s]).filter(x=>x!==null));
+    const ma=Math.min(...ALL_COLS.map(s=>a.voicing[s]).filter(x=>x!==null));
+    const mb=Math.min(...ALL_COLS.map(s=>b.voicing[s]).filter(x=>x!==null));
     return ma-mb;
   });
 
   return uniq;
 }
-
 function pickPreferredVoicing(voicings){
   if(!voicings.length) return null;
-  if(voicingPref === "open"){
-    const open = voicings.find(v=>v.tag==="open");
-    return open || voicings[0];
+  if(voicingPref==="open"){
+    const o=voicings.find(v=>v.tag==="open");
+    return o || voicings[0];
   }
-  if(voicingPref === "barreE"){
-    const e = voicings.find(v=>v.tag==="barre-E");
+  if(voicingPref==="barreE"){
+    const e=voicings.find(v=>v.tag==="barre-E");
     return e || voicings[0];
   }
-  if(voicingPref === "barreA"){
-    const a = voicings.find(v=>v.tag==="barre-A");
+  if(voicingPref==="barreA"){
+    const a=voicings.find(v=>v.tag==="barre-A");
     return a || voicings[0];
   }
   return voicings[0];
 }
 
+/* bass: apply root only on chosen follow string */
+function applyBassRootOnly(rootPc){
+  ALL_COLS.forEach(s=>selectedByString.set(s,null));
+  markSelectedCells();
+
+  if(!activeStrings.includes(bassFollowString)) return;
+  const tuning=currentTuning();
+  const s=bassFollowString;
+  const openPc=mod(tuning[s],12);
+
+  let f=mod(rootPc-openPc,12);
+  if(f+12<=FRETS && f<=2) f+=12;
+  if(f>FRETS) f=0;
+
+  selectedByString.set(s,f);
+  markSelectedCells();
+  updateUI();
+}
+
 function applyVoicing(voicing){
-  ALL_COLS.forEach(s => selectedByString.set(s, null));
-  document.querySelectorAll('.cell.selected').forEach(el=>el.classList.remove('selected'));
+  ALL_COLS.forEach(s=>selectedByString.set(s,null));
+  markSelectedCells();
   if(!voicing){ updateUI(); return; }
 
   for(const s of ALL_COLS){
-    const f = voicing[s];
-    if(f === null) continue;
-    selectedByString.set(s, f);
-    const cell = document.querySelector(`.cell[data-string="${s}"][data-fret="${f}"]`);
-    if(cell){
-      cell.classList.add('selected');
-      pulseCell(cell);
-    }
+    const f=voicing[s];
+    if(f===null) continue;
+    selectedByString.set(s,f);
   }
+  markSelectedCells();
   updateUI();
 }
 
-/* Bass modes: chord click sets root only on chosen follow string */
-function applyBassRootOnly(rootPc){
-  ALL_COLS.forEach(s => selectedByString.set(s, null));
-  document.querySelectorAll('.cell.selected').forEach(el=>el.classList.remove('selected'));
-
-  const tuning = currentTuning();
-  const s = bassFollowString;
-  if(!activeStrings.includes(s)) return;
-
-  const openPc = mod(tuning[s], 12);
-  let f = mod(rootPc - openPc, 12);
-  if(f + 12 <= FRETS && f <= 2) f += 12;
-  if(f > FRETS) f = 0;
-
-  selectedByString.set(s, f);
-  const cell = document.querySelector(`.cell[data-string="${s}"][data-fret="${f}"]`);
-  if(cell){
-    cell.classList.add('selected');
-    pulseCell(cell);
-  }
-  updateUI();
-}
-
-/* ---------------- chord list UI ---------------- */
-const ROOTS = NOTE_NAMES.slice();
-let allChordItems = []; // {rootPc,qid,voicings (guitar only)}
-
-function buildQualityFilter(){
-  const sel = document.getElementById('qualitySel');
-  sel.innerHTML = `<option value="all">すべて</option>`;
-  QUALITIES.forEach(q=>{
-    const opt = document.createElement('option');
-    opt.value = q.id;
-    opt.textContent = q.id;
-    sel.appendChild(opt);
-  });
-}
-
-function buildBassNoteSel(){
-  const sel = document.getElementById('bassNoteSel');
-  sel.innerHTML = "";
-  ROOTS.forEach(n=>{
-    const opt = document.createElement('option');
-    opt.value = n;
-    opt.textContent = n;
-    sel.appendChild(opt);
-  });
-  sel.value = "E";
-  slashBassPc = nameToPc("E");
-  sel.addEventListener('change', ()=>{
-    slashBassPc = nameToPc(sel.value);
-    renderChordGrid();
-  });
-}
-
-function buildBassFollowSel(){
-  const sel = document.getElementById('bassFollowSel');
-  sel.innerHTML = "";
-  // will be populated per instrument
-}
-
-function repopulateBassFollowSel(){
-  const sel = document.getElementById('bassFollowSel');
-  sel.innerHTML = "";
-  const strings = [...activeStrings].sort((a,b)=>b-a); // 低い方(番号大)から
-  for(const s of strings){
-    const opt = document.createElement('option');
-    opt.value = String(s);
-    opt.textContent = `${s}弦でルート`;
-    sel.appendChild(opt);
-  }
-  // default to lowest physical string (max number) but user can change
-  bassFollowString = strings[0];
-  sel.value = String(bassFollowString);
-  sel.onchange = ()=>{
-    bassFollowString = Number(sel.value);
-  };
-}
-
+/* chord inventory + render */
+let allChordItems=[]; // {rootPc,qid,voicings}
 function rebuildChordInventory(){
-  allChordItems = [];
+  allChordItems=[];
   for(const q of QUALITIES){
     for(let r=0;r<12;r++){
-      if(instrument === "guitar"){
-        const voicings = generateCommonVoicings(r, q.id);
+      if(instrument==="guitar"){
+        const voicings=generateCommonVoicings(r,q.id);
         if(!voicings.length) continue;
-        allChordItems.push({rootPc:r, qid:q.id, voicings});
+        allChordItems.push({rootPc:r,qid:q.id,voicings});
       }else{
-        // bass: hide those not playable in guitar common shapes
-        const savedInst = instrument, savedBase = baseTuning, savedCapo = capo, savedActive = activeStrings, savedPref = powerRootPref;
-        instrument = "guitar";
-        baseTuning = structuredClone(GUITAR_6);
-        activeStrings = [6,5,4,3,2,1];
-        capo = 0;
-        powerRootPref = "auto";
-        const voicings = generateCommonVoicings(r, q.id);
-        instrument = savedInst; baseTuning = savedBase; capo = savedCapo; activeStrings = savedActive; powerRootPref = savedPref;
+        // show only if it exists in guitar common shapes (filter "impossible")
+        const saved = {instrument, baseTuning, activeStrings, capo, powerRootPref};
+        instrument="guitar"; baseTuning=structuredClone(GUITAR_6); activeStrings=[6,5,4,3,2,1]; capo=0; powerRootPref="auto";
+        const voicings=generateCommonVoicings(r,q.id);
+        instrument=saved.instrument; baseTuning=saved.baseTuning; activeStrings=saved.activeStrings; capo=saved.capo; powerRootPref=saved.powerRootPref;
 
         if(!voicings.length) continue;
-        allChordItems.push({rootPc:r, qid:q.id, voicings:[]});
+        allChordItems.push({rootPc:r,qid:q.id,voicings:[]});
       }
     }
   }
 }
-
 function passesSearch(item, q){
   if(!q) return true;
-  const s = q.toLowerCase().replace(/\s+/g,"");
-  const name = chordName(item.rootPc, item.qid).toLowerCase().replace(/\s+/g,"");
-  const base = (pcToName(item.rootPc) + qualityLabel(item.qid)).toLowerCase().replace(/\s+/g,"");
-  const slash = `${name}/${pcToName(slashBassPc)}`.toLowerCase().replace(/\s+/g,"");
-  return name.includes(s) || base.includes(s) || slash.includes(s);
+  const s=q.toLowerCase().replace(/\s+/g,"");
+  const base=chordName(item.rootPc,item.qid).toLowerCase();
+  const slash=(base+`/${pcToName(slashBassPc)}`).toLowerCase();
+  return base.includes(s) || slash.includes(s);
 }
-
 function renderChordGrid(){
-  const grid = document.getElementById('chordGrid');
-  grid.innerHTML = "";
+  const grid=document.getElementById('chordGrid');
+  grid.innerHTML="";
 
-  const qText = document.getElementById('searchBox').value.trim();
-  const qFilter = document.getElementById('qualitySel').value;
+  const qText=document.getElementById('searchBox').value.trim();
+  const qFilter=document.getElementById('qualitySel').value;
 
-  let items = allChordItems
-    .filter(it => (qFilter==="all" ? true : it.qid===qFilter))
-    .filter(it => passesSearch(it, qText))
-    .sort((a,b)=> chordName(a.rootPc,a.qid).localeCompare(chordName(b.rootPc,b.qid)));
+  let items=allChordItems
+    .filter(it=>qFilter==="all" ? true : it.qid===qFilter)
+    .filter(it=>passesSearch(it,qText))
+    .sort((a,b)=>chordName(a.rootPc,a.qid).localeCompare(chordName(b.rootPc,b.qid)));
 
-  // Slash mode: guitar only. Show only if at least one voicing exists; label ok/ng per button.
-  // Also: in slash mode, button click chooses first "bass ok" voicing if possible, else first and mark NG.
   for(const it of items){
-    const btn = document.createElement('button');
-    btn.className = 'cbtn';
-    btn.type = 'button';
+    const btn=document.createElement('button');
+    btn.className="cbtn";
+    btn.type="button";
 
-    const baseName = chordName(it.rootPc, it.qid);
+    const baseName=chordName(it.rootPc,it.qid);
 
-    if(slashMode && instrument === "guitar"){
-      const wanted = slashBassPc;
-      const okVoicing = it.voicings.find(v => voicingBassPc(v.voicing) === wanted);
-      const isOk = !!okVoicing;
-
+    if(slashMode && instrument==="guitar"){
+      const wanted=slashBassPc;
+      const okVoicing = it.voicings.find(v=>voicingBassPc(v.voicing)===wanted);
+      const isOk=!!okVoicing;
       btn.innerHTML = `${baseName}/${pcToName(wanted)} <span class="badge ${isOk?'ok':'ng'}">bass ${isOk?'ok':'NG'}</span>`;
-
-      btn.addEventListener('click', ()=>{
+      btn.onclick = ()=>{
         const picked = okVoicing || pickPreferredVoicing(it.voicings);
         applyVoicing(picked ? picked.voicing : null);
-      });
+      };
     }else{
-      btn.textContent = baseName;
-      btn.addEventListener('click', ()=>{
-        if(instrument === "guitar"){
-          const v = pickPreferredVoicing(it.voicings);
+      btn.textContent=baseName;
+      btn.onclick=()=>{
+        if(instrument==="guitar"){
+          const v=pickPreferredVoicing(it.voicings);
           applyVoicing(v ? v.voicing : null);
         }else{
           applyBassRootOnly(it.rootPc);
         }
-      });
+      };
     }
 
-    btn.addEventListener('dblclick', ()=>{
-      document.getElementById('btnClear').click();
-    });
-
-    // In slash mode, optionally hide chords with no OK voicing
-    // → 今は「一覧に出してNGも見える」仕様（要望のラベル表示が目的）
+    btn.ondblclick=()=>document.getElementById('btnClear').click();
     grid.appendChild(btn);
   }
 }
 
-/* ---------------- instrument switching ---------------- */
+/* ===================== EVENTS ===================== */
 function setInstrument(val){
-  instrument = val;
+  instrument=val;
+
   if(instrument==="guitar"){
-    baseTuning = structuredClone(GUITAR_6);
-    activeStrings = [6,5,4,3,2,1];
+    baseTuning=structuredClone(GUITAR_6);
+    activeStrings=[6,5,4,3,2,1];
   }else if(instrument==="bass4"){
-    baseTuning = structuredClone(BASS_4);
-    activeStrings = [4,3,2,1];
-    capo = 0;
-    document.getElementById('capoSel').value = "0";
+    baseTuning=structuredClone(BASS_4);
+    activeStrings=[4,3,2,1];
+    capo=0;
   }else if(instrument==="bass5"){
-    baseTuning = structuredClone(BASS_5);
-    activeStrings = [5,4,3,2,1];
-    capo = 0;
-    document.getElementById('capoSel').value = "0";
+    baseTuning=structuredClone(BASS_5);
+    activeStrings=[5,4,3,2,1];
+    capo=0;
   }else{
-    baseTuning = structuredClone(BASS_6);
-    activeStrings = [6,5,4,3,2,1];
-    capo = 0;
-    document.getElementById('capoSel').value = "0";
+    baseTuning=structuredClone(BASS_6);
+    activeStrings=[6,5,4,3,2,1];
+    capo=0;
   }
 
-  document.getElementById('btnClear').click();
+  // enable/disable controls
+  const capoSel=document.getElementById('capoSel');
+  const voSel=document.getElementById('voicingSel');
+  const slashToggle=document.getElementById('slashMode');
+  const bassNoteSel=document.getElementById('bassNoteSel');
+  const bassFollowSel=document.getElementById('bassFollowSel');
+  const powerSel=document.getElementById('powerRootSel');
 
-  // enable/disable relevant controls
-  const capoSel = document.getElementById('capoSel');
-  const voiceSel = document.getElementById('voicingSel');
-  const slashToggle = document.getElementById('slashMode');
-  const bassNoteSel = document.getElementById('bassNoteSel');
-  const bassFollowSel = document.getElementById('bassFollowSel');
-  const powerSel = document.getElementById('powerRootSel');
+  if(instrument!=="guitar"){
+    capoSel.disabled=true;
+    voSel.disabled=true;
+    slashToggle.disabled=true;
+    bassNoteSel.style.display="none";
+    powerSel.disabled=true;
 
-  if(instrument !== "guitar"){
-    capoSel.disabled = true;
-    voiceSel.disabled = true;
-    slashToggle.disabled = true;
-    bassNoteSel.style.display = "none";
-    powerSel.disabled = true;
-
-    bassFollowSel.style.display = "inline-block";
+    bassFollowSel.style.display="inline-block";
     repopulateBassFollowSel();
+    bassFollowSel.value = String(bassFollowString);
   }else{
-    capoSel.disabled = false;
-    voiceSel.disabled = false;
-    slashToggle.disabled = false;
-    powerSel.disabled = false;
+    capoSel.disabled=false;
+    voSel.disabled=false;
+    slashToggle.disabled=false;
+    powerSel.disabled=false;
 
-    bassFollowSel.style.display = "none";
-    if(slashMode) bassNoteSel.style.display = "inline-block";
+    bassFollowSel.style.display="none";
+    bassNoteSel.style.display = slashMode ? "inline-block" : "none";
   }
 
+  buildStringsHeaderAndX();
   rebuildChordInventory();
   renderChordGrid();
+  markSelectedCells();
   updateUI();
 }
 
-/* ---------------- events ---------------- */
-document.getElementById('instSel').addEventListener('change', (e)=>setInstrument(e.target.value));
-document.getElementById('tuneSel').addEventListener('change', (e)=>{
-  tuneOffset = Number(e.target.value);
-  rebuildChordInventory();
-  renderChordGrid();
-  updateUI();
-});
-document.getElementById('capoSel').addEventListener('change', (e)=>{
-  capo = Number(e.target.value);
-  if(instrument!=="guitar"){
-    capo = 0;
-    e.target.value = "0";
-  }
-  rebuildChordInventory();
-  renderChordGrid();
-  updateUI();
-});
-document.getElementById('voicingSel').addEventListener('change', (e)=>{
-  voicingPref = e.target.value;
-});
+// click: fret cells
+document.addEventListener('click',(e)=>{
+  const cell=e.target.closest('.cell');
+  if(!cell) return;
 
-document.getElementById('powerRootSel').addEventListener('change', (e)=>{
-  powerRootPref = e.target.value; // auto | 6 | 5
-  rebuildChordInventory();
-  renderChordGrid();
-});
+  const s=Number(cell.dataset.string);
+  const f=Number(cell.dataset.fret);
+  if(!activeStrings.includes(s)) return;
 
-document.getElementById('searchBox').addEventListener('input', renderChordGrid);
-document.getElementById('qualitySel').addEventListener('change', renderChordGrid);
+  // clear other selection on the same string
+  document.querySelectorAll(`.cell.selected[data-string="${s}"]`).forEach(el=>el.classList.remove('selected'));
 
-document.getElementById('slashMode').addEventListener('change', (e)=>{
-  slashMode = e.target.checked;
-  const sel = document.getElementById('bassNoteSel');
-  if(slashMode && instrument==="guitar"){
-    sel.style.display = "inline-block";
+  const cur=selectedByString.get(s);
+  if(cur===f){
+    // same => mute
+    selectedByString.set(s,null);
   }else{
-    sel.style.display = "none";
+    selectedByString.set(s,f);
+    cell.classList.add('selected');
+    pulseCell(cell);
+
+    const tuning=currentTuning();
+    poko(midiToFreq(tuning[s]+f), 0.12);
   }
-  renderChordGrid();
+  updateUI();
 });
 
-/* ---------------- init ---------------- */
-buildPiano();
-buildQualityFilter();
-buildBassNoteSel();
-buildBassFollowSel();
-setInstrument("guitar");
-updateUI();
+// click: X buttons (header/sticky)
+document.addEventListener('click',(e)=>{
+  const xb = e.target.closest('.xbtn');
+  if(!xb) return;
+  const s = Number(xb.dataset.string);
+  if(!activeStrings.includes(s)) return;
+
+  const now = selectedByString.get(s);
+  if(now === null){
+    // unmute -> open string
+    selectedByString.set(s, 0);
+  }else{
+    // mute
+    selectedByString.set(s, null);
+    document.querySelectorAll(`.cell.selected[data-string="${s}"]`).forEach(el=>el.classList.remove('selected'));
+  }
+  markSelectedCells();
+  updateUI();
+});
+
+document.getElementById('btnClear').onclick=()=>{
+  ALL_COLS.forEach(s=>selectedByString.set(s,null));
+  markSelectedCells();
+  updateUI();
+};
+
+document.getElementById('instSel').onchange=(e)=>{ setInstrument(e.target.value); scheduleSave(); };
+document.getElementById('tuneSel').onchange=(e)=>{
+  tuneOffset=Number(e.target.value);
+  buildStringsHeaderAndX();
+  rebuildChordInventory();
+  renderChordGrid();
+  updateUI();
+};
+document.getElementById('capoSel').onchange=(e)=>{
+  capo=Number(e.target.value);
+  if(instrument!=="guitar"){ capo=0; e.target.value="0"; }
+  buildStringsHeaderAndX();
+  rebuildChordInventory();
+  renderChordGrid();
+  updateUI();
+};
+document.getElementById('voicingSel').onchange=(e)=>{ voicingPref=e.target.value; scheduleSave(); };
+document.getElementById('powerRootSel').onchange=(e)=>{
+  powerRootPref=e.target.value;
+  rebuildChordInventory();
+  renderChordGrid();
+  updateUI();
+};
+document.getElementById('searchBox').oninput=()=>renderChordGrid();
+document.getElementById('qualitySel').onchange=()=>renderChordGrid();
+document.getElementById('slashMode').onchange=(e)=>{
+  slashMode=e.target.checked;
+  const sel=document.getElementById('bassNoteSel');
+  if(slashMode && instrument==="guitar") sel.style.display="inline-block";
+  else sel.style.display="none";
+  renderChordGrid();
+  scheduleSave();
+};
+document.getElementById('bassNoteSel').onchange=(e)=>{
+  slashBassPc=nameToPc(e.target.value);
+  renderChordGrid();
+  scheduleSave();
+};
+document.getElementById('bassFollowSel').onchange=(e)=>{
+  bassFollowString=Number(e.target.value);
+  scheduleSave();
+};
+
+document.getElementById('btnShare').onclick = async ()=>{
+  saveStateToHash();
+  const url = location.href;
+  try{
+    await navigator.clipboard.writeText(url);
+    const btn = document.getElementById('btnShare');
+    const old = btn.textContent;
+    btn.textContent = "コピー済み";
+    setTimeout(()=>btn.textContent=old, 900);
+  }catch{
+    prompt("このURLをコピーして共有してね", url);
+  }
+};
+
+/* ===================== INIT ===================== */
+function buildAllStatic(){
+  buildCapoSel();
+  buildQualitySel();
+  buildBassNoteSel();
+  buildPiano();
+  buildBoard();
+}
+
+function applyStateToControls(){
+  document.getElementById('instSel').value = instrument;
+  document.getElementById('tuneSel').value = String(tuneOffset);
+  document.getElementById('capoSel').value = String(capo);
+  document.getElementById('voicingSel').value = voicingPref;
+  document.getElementById('powerRootSel').value = powerRootPref;
+  document.getElementById('slashMode').checked = slashMode;
+  document.getElementById('bassNoteSel').value = pcToName(slashBassPc);
+}
+
+function init(){
+  buildAllStatic();
+
+  const had = loadStateFromHash();
+  applyStateToControls();
+
+  setInstrument(instrument);
+
+  if(instrument!=="guitar"){
+    repopulateBassFollowSel();
+    document.getElementById('bassFollowSel').value = String(bassFollowString);
+  }
+
+  markSelectedCells();
+  updateUI();
+
+  if(!had) saveStateToHash();
+}
+init();
 </script>
 </body>
 </html>
-"""
-
-@app.route("/")
-def home():
-    return render_template_string(
-        HTML,
-        NOTE_NAMES=NOTE_NAMES,
-        black_pcs=sorted(list(BLACK_PCS)),
-        MIN_MIDI=MIN_MIDI,
-        MAX_MIDI=MAX_MIDI,
-        FRETS=FRETS,
-        guitar6=GUITAR_6,
-        bass4=BASS_4,
-        bass5=BASS_5,
-        bass6=BASS_6
-    )
-
-if __name__ == "__main__":
-    app.run(debug=True)
