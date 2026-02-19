@@ -4,6 +4,33 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>ギター／ベースピアノ変換サイト</title>
+/* ===================================================
+   MOBILE: コード一覧を2列固定（誤タップ減）
+   =================================================== */
+
+@media (max-width: 900px){
+
+  /* コード一覧を必ず2列 */
+  .chordgrid{
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+  }
+
+  /* ボタンを大きく（タッチ最適化） */
+  .cbtn{
+    padding: 18px 14px !important;
+    font-size: 18px !important;
+    border-radius: 22px !important;
+  }
+
+}
+
+/* 超小型端末は1列 */
+@media (max-width: 420px){
+  .chordgrid{
+    grid-template-columns: 1fr !important;
+  }
+}
 <style>
 :root{
   --bg0:#050505;
