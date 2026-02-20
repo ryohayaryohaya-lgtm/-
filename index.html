@@ -7,35 +7,26 @@
 
 <style>
 /* =========================
-   THEME (Pro Neon: White/Black)
+   THEME (White/Black Neon)
    ========================= */
 :root{
   --bg0:#050505;
-  --bg1:#0a0a0a;
-  --panel: rgba(10,10,10,.58);
+  --bg1:#0b0b0b;
+  --panel: rgba(10,10,10,.62);
   --shadow: 0 12px 34px rgba(0,0,0,.58);
-  --glow: 0 0 10px rgba(255,255,255,.45), 0 0 22px rgba(255,255,255,.22);
-  --glowStrong: 0 0 12px rgba(255,255,255,.75), 0 0 34px rgba(255,255,255,.38);
+  --glow: 0 0 10px rgba(255,255,255,.40), 0 0 22px rgba(255,255,255,.22);
+  --glowStrong: 0 0 12px rgba(255,255,255,.72), 0 0 34px rgba(255,255,255,.36);
 
   /* board */
   --cellW: 40px;
   --cellH: 34px;
   --fretW: 46px;
   --spacerH: 34px;
-  --xW: var(--fretW);
 
-  /* piano */
+  /* piano (PC) */
   --pW: 190px;
-  --stepH: 14px;
-  --whiteH: 14px;
-  --blackH: 11px;
-  --blackW: 132px;
 
   --radius: 18px;
-
-  /* mobile bottom sheet */
-  --sheetPeek: 64px;
-  --sheetMax: 78vh;
 }
 
 *{ box-sizing:border-box; }
@@ -58,7 +49,7 @@ body::before{
     repeating-linear-gradient(0deg, rgba(255,255,255,.03) 0 1px, transparent 1px 4px),
     repeating-linear-gradient(90deg, rgba(255,255,255,.02) 0 1px, transparent 1px 4px);
   mix-blend-mode: overlay;
-  opacity:.25;
+  opacity:.22;
 }
 
 .wrap{ max-width: 1500px; margin:0 auto; padding: 12px; }
@@ -95,7 +86,7 @@ h1{
   align-items:center;
 }
 
-select, .btn, input, label{
+select, .btn, input{
   border:1px solid rgba(255,255,255,.30);
   background: rgba(10,10,10,.55);
   color:#fff;
@@ -109,7 +100,7 @@ select, .btn, input, label{
   touch-action: manipulation;
 }
 input{ cursor:text; }
-select:hover, .btn:hover, input:hover, label:hover{
+select:hover, .btn:hover, input:hover{
   border-color: rgba(255,255,255,.58);
   box-shadow: var(--glow);
 }
@@ -118,20 +109,9 @@ select:hover, .btn:hover, input:hover, label:hover{
   background: rgba(255,255,255,.12);
   box-shadow: inset 0 0 0 1px rgba(255,255,255,.12);
 }
-.toggle{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  padding:10px 12px;
-  border-radius:14px;
-  border:1px solid rgba(255,255,255,.30);
-  background: rgba(10,10,10,.55);
-  user-select:none;
-}
-.toggle input{ width:18px; height:18px; cursor:pointer; }
 
 /* =========================
-   Panels / Layout
+   Panels / Layout (PC)
    ========================= */
 .main{
   display:flex;
@@ -167,42 +147,11 @@ select:hover, .btn:hover, input:hover, label:hover{
 }
 
 /* =========================
-   Fretboard + Piano
+   Fretboard + Piano (PC)
    ========================= */
 .fret-piano{ display:flex; gap:12px; align-items:flex-start; }
 .fret-piano > div:first-child{ flex: 1 1 auto; min-width: 0; }
 
-.mute-strip{ display:flex; align-items:center; gap:8px; margin: 0 0 10px 0; }
-.mute-x{
-  width:18px; text-align:center; font-weight:1000; text-shadow: var(--glow);
-  border-radius:10px;
-  padding:4px 6px;
-  border:1px solid rgba(255,255,255,.10);
-}
-.mute-x.glow{
-  box-shadow: 0 0 16px rgba(255,255,255,.50);
-  border-color: rgba(255,255,255,.35);
-  background: rgba(255,255,255,.08);
-}
-.dot{
-  width:14px; height:14px; border-radius:50%;
-  background: rgba(255,255,255,.08);
-  border:1px solid rgba(255,255,255,.18);
-  box-shadow: inset 0 0 10px rgba(0,0,0,.65);
-}
-.dot.on{ background: rgba(255,255,255,.95); border-color: rgba(255,255,255,.90); box-shadow: var(--glowStrong); }
-.dot.mutedGlow{
-  background: rgba(255,255,255,.16);
-  border-color: rgba(255,255,255,.35);
-  box-shadow: 0 0 16px rgba(255,255,255,.40);
-}
-
-/* header row: open note + string number (same size as fret numbers) */
-.headerwrap{
-  display:flex;
-  gap:10px;
-  align-items:stretch;
-}
 .strings-row{
   display:grid;
   grid-template-columns: var(--fretW) repeat(6, var(--cellW));
@@ -227,7 +176,7 @@ select:hover, .btn:hover, input:hover, label:hover{
 .slab{
   margin-top:4px;
   font-weight:1000;
-  font-size:14px; /* ← フレット番号と同等 */
+  font-size:14px;
   color: rgba(255,255,255,.92);
   line-height:1;
   text-shadow: 0 0 10px rgba(255,255,255,.22);
@@ -235,44 +184,6 @@ select:hover, .btn:hover, input:hover, label:hover{
 .slabwrap.disabled{ opacity:.25; }
 .slabwrap.muted{ opacity:.40; background: rgba(255,255,255,.06); }
 .slabwrap.mutedGlow{ opacity:.55; box-shadow: 0 0 18px rgba(255,255,255,.40); border-color: rgba(255,255,255,.40); }
-
-/* per-string X buttons */
-.xcol{
-  width: var(--xW);
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-}
-.xcol-sticky{
-  position: sticky;
-  top: 0;
-  align-self:flex-start;
-}
-.xbtn{
-  width: var(--xW);
-  border-radius:12px;
-  border:1px solid rgba(255,255,255,.22);
-  background: rgba(0,0,0,.35);
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  padding:8px 0 10px;
-  cursor:pointer;
-  user-select:none;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.12);
-  transition: box-shadow .18s ease, border-color .18s ease, transform .06s ease, background .18s ease;
-}
-.xbtn .x{ font-size:18px; font-weight:1000; line-height:1; }
-.xbtn .lbl{ margin-top:6px; font-size:12px; font-weight:1000; opacity:.9; }
-.xbtn:hover{ border-color: rgba(255,255,255,.55); box-shadow: var(--glow); }
-.xbtn:active{ transform: translateY(1px); }
-.xbtn.on{
-  border-color: rgba(255,255,255,.70);
-  box-shadow: var(--glowStrong);
-  background: rgba(255,255,255,.12);
-}
-.xbtn.disabled{ opacity:.20; pointer-events:none; }
 
 /* scroll area */
 .scroll{
@@ -287,8 +198,6 @@ select:hover, .btn:hover, input:hover, label:hover{
   border:2px solid rgba(0,0,0,.55);
 }
 .scroll::-webkit-scrollbar-track{ background: rgba(0,0,0,.35); border-radius:999px; }
-
-.fretwrap{ display:flex; gap:10px; align-items:flex-start; }
 
 .board{
   display:grid;
@@ -362,7 +271,7 @@ select:hover, .btn:hover, input:hover, label:hover{
 }
 .cell.pulse{ animation: pulseGlow .45s ease-out; }
 
-/* position marks (not overlapping numbers, we have no numbers in cells) */
+/* position marks */
 .cell .posmark{
   position:absolute;
   width:9px; height:9px;
@@ -385,10 +294,10 @@ select:hover, .btn:hover, input:hover, label:hover{
 
 /* =========================
    Piano (silent highlight)
+   NOTE: actual scaling is done in JS to fit viewport.
    ========================= */
 .piano{
   width:var(--pW);
-  height: 100%;
   position:relative;
   background: rgba(255,255,255,.05);
   border:1px solid rgba(255,255,255,.22);
@@ -399,8 +308,7 @@ select:hover, .btn:hover, input:hover, label:hover{
 .key-white{
   position:absolute;
   left:0;
-  width:var(--pW);
-  height:var(--whiteH);
+  width:100%;
   border-top:1px solid rgba(255,255,255,.16);
   display:flex;
   align-items:center;
@@ -414,8 +322,6 @@ select:hover, .btn:hover, input:hover, label:hover{
 .key-black{
   position:absolute;
   left:0;
-  width:var(--blackW);
-  height:var(--blackH);
   background: rgba(0,0,0,.96);
   border:1px solid rgba(255,255,255,.34);
   border-radius:6px;
@@ -441,16 +347,9 @@ select:hover, .btn:hover, input:hover, label:hover{
 }
 
 /* =========================
-   Right (PC chord list)
+   Chords (PC right)
    ========================= */
-.right .panel-body{ padding:12px; }
 .chordlist{ max-height: 74vh; overflow:auto; padding-right:6px; }
-.chordlist::-webkit-scrollbar{ width:10px; }
-.chordlist::-webkit-scrollbar-thumb{
-  background: rgba(255,255,255,.22);
-  border-radius:999px;
-  border:2px solid rgba(0,0,0,.55);
-}
 .chordgrid{ display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; }
 
 .cbtn{
@@ -467,7 +366,6 @@ select:hover, .btn:hover, input:hover, label:hover{
 }
 .cbtn:hover{ border-color: rgba(255,255,255,.55); box-shadow: var(--glow); }
 .cbtn:active{ transform: translateY(1px); }
-.cbtn[disabled]{ opacity:.35; cursor:not-allowed; }
 
 .badge{
   display:inline-block;
@@ -483,121 +381,107 @@ select:hover, .btn:hover, input:hover, label:hover{
 .badge.ng{ opacity:.7; }
 
 /* =========================
-   Mobile: sticky piano + bottom sheet chord panel
+   MOBILE: compact 3-column fixed layout
+   left fixed chords, center board, right fixed piano
    ========================= */
-.mobileOnly{ display:none; }
+.mobileLeft, .mobileRight{ display:none; }
 
 @media (max-width: 900px){
   :root{
-    --cellW: 46px;
-    --cellH: 48px;
-    --fretW: 56px;
-    --spacerH: 46px;
-    --xW: var(--fretW);
+    /* compact board */
+    --cellW: 34px;
+    --cellH: 32px;
+    --fretW: 40px;
+    --spacerH: 28px;
 
-    --pW: 96px;
-    --whiteH: 14px;
-    --blackH: 11px;
-    --blackW: 74px;
+    /* slim piano */
+    --pW: 92px;
   }
 
-  .main{ flex-direction: column; }
-  .left{ min-width: unset; }
-  .right{ display:none; } /* PC右カラムはスマホでは隠す */
-  .mobileOnly{ display:block; }
+  .main{ display:block; }
+  .left, .right{ display:none; } /* hide PC panels */
 
-  /* piano always visible on right edge */
-  .fret-piano{
-    flex-direction: row !important;
-    gap: 8px;
-    align-items:flex-start;
+  .mobileLeft, .mobileRight{ display:block; }
+
+  /* fixed side panels */
+  .mobileLeft{
+    position: fixed;
+    left: 8px;
+    top: 92px;     /* below topbar */
+    bottom: 8px;
+    width: 150px;
+    z-index: 50;
   }
-  .piano{
-    position: sticky;
-    top: 10px;
-    right: 0;
-    height: 74vh !important;
-    overflow: hidden; /* scroll synced */
+  .mobileRight{
+    position: fixed;
+    right: 8px;
+    top: 92px;
+    bottom: 8px;
+    width: var(--pW);
+    z-index: 50;
+  }
+
+  /* center area must avoid side panels */
+  .mobileCenter{
+    padding-left: 166px;  /* left panel + gap */
+    padding-right: calc(var(--pW) + 16px); /* right panel + gap */
+  }
+
+  /* make top controls compact but still tappable */
+  select, .btn, input{
+    font-size: 14px;
+    padding: 10px 10px;
     border-radius: 14px;
   }
 
-  /* controls become bigger */
-  select, .btn, input, label{
-    font-size:16px;
-    padding:14px 14px;
-    border-radius:18px;
+  /* mobile chord list: 1 column, big-ish buttons */
+  .mChordList{
+    height: calc(100% - 54px);
+    overflow:auto;
+    padding: 10px 10px 12px;
   }
-  .toggle input{ width:22px; height:22px; }
-
-  /* chord grid: 2 columns fixed */
-  .sheet-grid{
+  .mChordGrid{
     display:grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
+    grid-template-columns: 1fr;
+    gap: 10px;
   }
-  .sheet-grid .cbtn{
-    padding:18px 14px;
-    font-size:18px;
-    border-radius:22px;
+  .mChordGrid .cbtn{
+    padding: 14px 10px;
+    font-size: 16px;
+    border-radius: 16px;
   }
-}
-@media (max-width: 420px){
-  :root{ --pW: 88px; --blackW: 68px; }
-  .sheet-grid{ grid-template-columns: 1fr; } /* super small: 1 column */
+
+  /* mobile piano full visible in its panel */
+  .piano{
+    height: 100%;
+  }
+
+  /* mobile board panel */
+  .mBoardPanel{
+    margin-top: 8px;
+    border-radius: 18px;
+    border:1px solid rgba(255,255,255,.18);
+    background: rgba(10,10,10,.55);
+    box-shadow: var(--shadow);
+    overflow:hidden;
+  }
+  .mBoardHead{
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(255,255,255,.14);
+    background: linear-gradient(90deg, rgba(255,255,255,.10), rgba(0,0,0,0));
+    font-weight: 1000;
+    font-size: 14px;
+  }
+  .mBoardBody{ padding: 10px 10px 12px; }
+
+  .scroll{ max-height: calc(100vh - 210px); } /* center board scroll height */
 }
 
-/* =========================
-   Mobile bottom sheet
-   ========================= */
-.sheet{
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: var(--sheetMax);
-  transform: translateY(calc(100% - var(--sheetPeek)));
-  background: rgba(10,10,10,.82);
-  border-top: 1px solid rgba(255,255,255,.18);
-  box-shadow: 0 -20px 60px rgba(0,0,0,.65);
-  backdrop-filter: blur(10px);
-  border-top-left-radius: 22px;
-  border-top-right-radius: 22px;
-  z-index: 9999;
-  transition: transform .18s ease;
-}
-.sheet.open{
-  transform: translateY(0);
-}
-.sheet-header{
-  padding: 10px 12px 8px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-}
-.sheet-handle{
-  width: 46px;
-  height: 6px;
-  border-radius: 999px;
-  background: rgba(255,255,255,.25);
-  margin: 0 auto 8px;
-}
-.sheet-title{
-  font-weight:1000;
-  font-size:15px;
-  letter-spacing:.3px;
-}
-.sheet-actions{ display:flex; gap:8px; align-items:center; }
-.sheet-body{
-  padding: 0 12px 14px;
-  height: calc(var(--sheetMax) - 70px);
-  overflow:auto;
-}
-.sheet-body::-webkit-scrollbar{ width:10px; }
-.sheet-body::-webkit-scrollbar-thumb{
-  background: rgba(255,255,255,.22);
-  border-radius:999px;
-  border:2px solid rgba(0,0,0,.55);
+/* very small phones: squeeze a bit more */
+@media (max-width: 420px){
+  :root{ --pW: 84px; }
+  .mobileLeft{ width: 140px; }
+  .mobileCenter{ padding-left: 156px; }
 }
 </style>
 </head>
@@ -607,7 +491,7 @@ select:hover, .btn:hover, input:hover, label:hover{
   <div class="topbar">
     <div>
       <h1>ギター／ベースピアノ変換サイト</h1>
-      <div class="sub">クリック即変換 / X共有URLで押さえ方そのまま送れる</div>
+      <div class="sub">クリック即変換 / 共有URLで押さえ方そのまま送れる</div>
     </div>
 
     <div class="controls">
@@ -638,12 +522,12 @@ select:hover, .btn:hover, input:hover, label:hover{
         <option value="5">Power: 5弦ルート</option>
       </select>
 
-      <label class="toggle" title="オンコードモード（例: C/E）">
-        <input id="slashMode" type="checkbox">
-        <span>オンコード</span>
-      </label>
-
+      <select id="slashSel" title="オンコード (例: /E)">
+        <option value="off">オンコードOFF</option>
+        <option value="on">オンコードON</option>
+      </select>
       <select id="bassNoteSel" title="オンコードのベース音" style="display:none;"></select>
+
       <select id="bassFollowSel" title="ベース：ルート追従する弦" style="display:none;"></select>
 
       <button class="btn primary" id="btnShare" type="button" title="URLをコピー">共有URL</button>
@@ -651,35 +535,21 @@ select:hover, .btn:hover, input:hover, label:hover{
     </div>
   </div>
 
+  <!-- PC layout -->
   <div class="main">
-    <!-- LEFT -->
     <div class="panel left">
       <div class="panel-title">指板（0〜22 / 縦スクロール） + ピアノロール（無音ハイライト）</div>
       <div class="panel-body fret-piano">
-
         <div>
-          <div class="mute-strip" id="muteStrip">
-            <div class="mute-x" id="muteX">X</div>
-          </div>
-
-          <div class="headerwrap">
-            <div class="strings-row" id="stringsRow"></div>
-            <div class="xcol" id="xColHeader"></div>
-          </div>
-
+          <div class="strings-row" id="stringsRow"></div>
           <div class="scroll" id="scrollArea">
-            <div class="fretwrap">
-              <div class="board" id="board"></div>
-              <div class="xcol xcol-sticky" id="xColSticky"></div>
-            </div>
+            <div class="board" id="board"></div>
           </div>
         </div>
-
         <div class="piano" id="piano"></div>
       </div>
     </div>
 
-    <!-- RIGHT (PC) -->
     <div class="panel right">
       <div class="panel-title">コード一覧（一般的な押さえ方のみ）</div>
       <div class="panel-body">
@@ -689,8 +559,7 @@ select:hover, .btn:hover, input:hover, label:hover{
         </div>
 
         <div style="margin-top:10px; color:rgba(255,255,255,.88); font-weight:900; font-size:13px; line-height:1.35;">
-          ・指板セル：クリックで入力 / 同じ場所クリックでミュート<br>
-          ・右の <b>X</b>：弦ごとミュート切替（発光＝ミュート）<br>
+          ・指板セル：クリックで入力 / 同じ場所クリックで<b>ミュート</b><br>
           ・コード：クリックで自動入力 / ダブルクリックで解除（ベースは<b>ルートのみ</b>）<br>
           ・共有：右上「共有URL」で状態つきURLコピー
         </div>
@@ -701,24 +570,39 @@ select:hover, .btn:hover, input:hover, label:hover{
       </div>
     </div>
   </div>
-</div>
 
-<!-- MOBILE BOTTOM SHEET -->
-<div class="sheet mobileOnly" id="sheet">
-  <div class="sheet-header" id="sheetHeader">
-    <div style="flex:1;">
-      <div class="sheet-handle"></div>
-      <div class="sheet-title">コード（タップで即入力）</div>
+  <!-- MOBILE layout (fixed left chords + center board + fixed right piano) -->
+  <div class="mobileLeft panel">
+    <div class="panel-title" style="font-size:14px;">コード</div>
+    <div style="padding:10px 10px 0;">
+      <input id="searchBoxM" placeholder="検索 (C, Am, C5, C/E)" style="width:100%;">
+      <div style="height:8px;"></div>
+      <select id="qualitySelM" style="width:100%;"></select>
     </div>
-    <div class="sheet-actions">
-      <input id="searchBoxM" placeholder="検索 (C, Am, C5, C/E)" style="width: 180px;">
-      <select id="qualitySelM" title="絞り込み"></select>
-      <button class="btn" id="sheetToggle" type="button">開く</button>
+    <div class="mChordList">
+      <div class="mChordGrid" id="chordGridM"></div>
     </div>
   </div>
-  <div class="sheet-body">
-    <div class="sheet-grid" id="chordGridM"></div>
+
+  <div class="mobileRight panel">
+    <div class="panel-title" style="font-size:14px;">Piano</div>
+    <div class="panel-body" style="padding:8px;">
+      <div class="piano" id="pianoM"></div>
+    </div>
   </div>
+
+  <div class="mobileCenter">
+    <div class="mBoardPanel">
+      <div class="mBoardHead">指板（0〜22）</div>
+      <div class="mBoardBody">
+        <div class="strings-row" id="stringsRowM"></div>
+        <div class="scroll" id="scrollAreaM">
+          <div class="board" id="boardM"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -727,7 +611,7 @@ const NOTE_NAMES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
 const BLACK_PCS = new Set([1,3,6,8,10]);
 const FRETS = 22;
 
-// Piano range: include low B0 for bass 5/6
+// range: include B0 for bass5/6
 const MIN_MIDI = 23; // B0
 const MAX_MIDI = 84; // C6
 
@@ -752,19 +636,18 @@ const midiToName = (midi)=>{
 const midiToFreq = (midi)=>440*Math.pow(2,(midi-69)/12);
 
 /* ===================== STATE ===================== */
-let instrument = "guitar"; // guitar|bass4|bass5|bass6
-let tuneOffset = 0;        // 0|-1|-2
-let capo = 0;              // 0..12 (guitar only)
-let voicingPref = "open";  // open|barreE|barreA
+let instrument = "guitar";
+let tuneOffset = 0;
+let capo = 0;
+let voicingPref = "open";
 let slashMode = false;
 let slashBassPc = nameToPc("E");
-let powerRootPref = "auto"; // auto|"6"|"5"
+let powerRootPref = "auto";
 let bassFollowString = 6;
 
 let baseTuning = structuredClone(GUITAR_6);
 let activeStrings = [6,5,4,3,2,1];
 
-// per string: fret number or null=mute
 const selectedByString = new Map();
 function resetSelected(){
   selectedByString.clear();
@@ -798,14 +681,11 @@ function saveStateToHash(){
   params.set("pos", parts.join("|"));
 
   const newHash = "#" + params.toString();
-  if(location.hash !== newHash){
-    history.replaceState(null, "", newHash);
-  }
+  if(location.hash !== newHash) history.replaceState(null, "", newHash);
 }
 function loadStateFromHash(){
   if(!location.hash || location.hash.length<2) return false;
-  const raw = location.hash.slice(1);
-  const params = new URLSearchParams(raw);
+  const params = new URLSearchParams(location.hash.slice(1));
 
   const i = params.get("i"); if(i) instrument = i;
   const t = params.get("t"); if(t!==null && t!=="") tuneOffset = Number(t);
@@ -824,9 +704,8 @@ function loadStateFromHash(){
       const [ss, ff] = pr.split(":");
       const sNum = Number(ss);
       if(!Number.isFinite(sNum)) continue;
-      if(ff==="x"){
-        selectedByString.set(sNum, null);
-      }else{
+      if(ff==="x") selectedByString.set(sNum, null);
+      else{
         const fNum = Number(ff);
         if(Number.isFinite(fNum)) selectedByString.set(sNum, fNum);
       }
@@ -876,11 +755,12 @@ function currentTuning(){
   return t;
 }
 
-/* ===================== UI BUILDERS ===================== */
+/* ===================== UI HELPERS ===================== */
 function pulseCell(cell){
   cell.classList.remove('pulse'); void cell.offsetWidth; cell.classList.add('pulse');
 }
 
+/* ===================== BUILDERS ===================== */
 function buildCapoSel(){
   const sel = document.getElementById('capoSel');
   sel.innerHTML = "";
@@ -893,7 +773,19 @@ function buildCapoSel(){
     sel.appendChild(o);
   }
 }
-
+const QUALITIES = [
+  {id:"maj",  label:""},
+  {id:"min",  label:"m"},
+  {id:"5",    label:"5"},
+  {id:"7",    label:"7"},
+  {id:"maj7", label:"maj7"},
+  {id:"m7",   label:"m7"},
+  {id:"sus2", label:"sus2"},
+  {id:"sus4", label:"sus4"},
+  {id:"6",    label:"6"},
+  {id:"add9", label:"add9"},
+  {id:"dim",  label:"dim"},
+];
 function buildQualitySel(selectEl){
   selectEl.innerHTML = "";
   const o0 = document.createElement('option');
@@ -905,7 +797,6 @@ function buildQualitySel(selectEl){
     selectEl.appendChild(o);
   });
 }
-
 function buildBassNoteSel(){
   const sel = document.getElementById('bassNoteSel');
   sel.innerHTML="";
@@ -915,7 +806,6 @@ function buildBassNoteSel(){
     sel.appendChild(o);
   });
 }
-
 function repopulateBassFollowSel(){
   const sel = document.getElementById('bassFollowSel');
   sel.innerHTML = "";
@@ -928,11 +818,10 @@ function repopulateBassFollowSel(){
   });
 }
 
-function buildStringsHeaderAndX(){
-  const row = document.getElementById('stringsRow');
+function buildStringsHeader(targetId){
+  const row = document.getElementById(targetId);
   row.innerHTML = "";
 
-  // left blank cell
   const left = document.createElement('div');
   left.textContent = "";
   row.appendChild(left);
@@ -941,55 +830,27 @@ function buildStringsHeaderAndX(){
   for(const s of ALL_COLS){
     const wrap = document.createElement('div');
     wrap.className = "slabwrap";
-    wrap.id = `slw${s}`;
+    wrap.id = `${targetId}-slw${s}`;
 
     const open = document.createElement('div');
     open.className = "openname";
-    open.id = `open${s}`;
+    open.id = `${targetId}-open${s}`;
     open.textContent = activeStrings.includes(s) ? midiToName(tuning[s]) : "—";
 
     const slab = document.createElement('div');
     slab.className = "slab";
-    slab.textContent = `${s}`; // ←「6弦」じゃなく数字だけ（短い）
+    slab.textContent = `${s}`;
 
     wrap.appendChild(open);
     wrap.appendChild(slab);
     row.appendChild(wrap);
   }
-
-  // build X buttons (header + sticky)
-  const h = document.getElementById('xColHeader');
-  const st = document.getElementById('xColSticky');
-  h.innerHTML = "";
-  st.innerHTML = "";
-  for(const s of ALL_COLS){
-    const make = (idPrefix)=>{
-      const btn = document.createElement('div');
-      btn.className = "xbtn";
-      btn.id = `${idPrefix}${s}`;
-      btn.dataset.string = String(s);
-
-      const x = document.createElement('div');
-      x.className = "x";
-      x.textContent = "X";
-      const lbl = document.createElement('div');
-      lbl.className = "lbl";
-      lbl.textContent = `${s}`; // ←短く
-
-      btn.appendChild(x);
-      btn.appendChild(lbl);
-      return btn;
-    };
-    h.appendChild(make("xH"));
-    st.appendChild(make("xS"));
-  }
 }
 
-function buildBoard(){
-  const board = document.getElementById('board');
+function buildBoard(targetBoardId){
+  const board = document.getElementById(targetBoardId);
   board.innerHTML = "";
 
-  // fret 0 row
   const fret0 = document.createElement('div');
   fret0.className = "fret openrow";
   fret0.textContent = "0";
@@ -998,12 +859,12 @@ function buildBoard(){
   for(const s of ALL_COLS){
     const c = document.createElement('div');
     c.className = "cell openrow";
+    c.dataset.board = targetBoardId;
     c.dataset.string = String(s);
     c.dataset.fret = "0";
     board.appendChild(c);
   }
 
-  // spacer row
   const spL = document.createElement('div');
   spL.className = "spacer left";
   board.appendChild(spL);
@@ -1013,7 +874,6 @@ function buildBoard(){
     board.appendChild(sp);
   }
 
-  // frets 1..22
   const dotFrets = new Set([3,5,7,9,15,17,19,21]);
   for(let f=1; f<=FRETS; f++){
     const fr = document.createElement('div');
@@ -1024,6 +884,7 @@ function buildBoard(){
     for(const s of ALL_COLS){
       const cell = document.createElement('div');
       cell.className = "cell";
+      cell.dataset.board = targetBoardId;
       cell.dataset.string = String(s);
       cell.dataset.fret = String(f);
 
@@ -1038,46 +899,40 @@ function buildBoard(){
   }
 }
 
-function buildPiano(){
-  const piano = document.getElementById('piano');
-  piano.innerHTML = "";
-
-  const css = getComputedStyle(document.documentElement);
-  const stepH  = parseFloat(css.getPropertyValue('--stepH'));
-  const whiteH = parseFloat(css.getPropertyValue('--whiteH'));
-  const blackH = parseFloat(css.getPropertyValue('--blackH'));
-
-  const total = (MAX_MIDI - MIN_MIDI + 1) * stepH;
-  piano.style.height = `${total}px`;
+/* Piano build: fit whole range into panel height */
+function buildPianoFit(pianoEl){
+  pianoEl.innerHTML = "";
+  const h = pianoEl.clientHeight || 600;
+  const count = (MAX_MIDI - MIN_MIDI + 1);
+  const stepH = Math.max(6, h / count);          // auto scale
+  const whiteH = stepH;                           // white key height
+  const blackH = stepH * 0.78;                    // black key slightly smaller
+  const blackW = Math.max(52, pianoEl.clientWidth * 0.78);
 
   for(let midi=MIN_MIDI; midi<=MAX_MIDI; midi++){
     const y = (midi - MIN_MIDI) * stepH;
     if(!isBlack(midi)){
       const w=document.createElement('div');
       w.className="key-white";
-      w.id=`key${midi}`;
+      w.id=`${pianoEl.id}-key${midi}`;
       w.style.bottom = `${y}px`;
       w.style.height = `${whiteH}px`;
       w.textContent = midiToName(midi);
-      piano.appendChild(w);
+      pianoEl.appendChild(w);
     }else{
       const b=document.createElement('div');
       b.className="key-black";
-      b.id=`key${midi}`;
+      b.id=`${pianoEl.id}-key${midi}`;
       b.style.bottom = `${y + (whiteH-blackH)/2}px`;
+      b.style.height = `${blackH}px`;
+      b.style.width = `${blackW}px`;
       b.textContent = midiToName(midi);
-      piano.appendChild(b);
+      pianoEl.appendChild(b);
     }
   }
 }
 
-/* ===================== UI UPDATE ===================== */
-function clearPianoActive(){
-  for(let midi=MIN_MIDI; midi<=MAX_MIDI; midi++){
-    const el=document.getElementById(`key${midi}`);
-    if(el) el.classList.remove('active');
-  }
-}
+/* ===================== UPDATE UI ===================== */
 function getSelectedMidis(){
   const tuning=currentTuning();
   const midis=[];
@@ -1091,47 +946,55 @@ function getSelectedMidis(){
   }
   return Array.from(new Set(midis)).sort((a,b)=>a-b);
 }
-function updateMuteDots(){
-  const strip=document.getElementById('muteStrip');
-  const muteX=document.getElementById('muteX');
-  strip.querySelectorAll('.dot').forEach(d=>d.remove());
 
-  let anyMuted=false;
-  for(const s of ALL_COLS){
-    const d=document.createElement('div');
-    const active = activeStrings.includes(s);
-    const muted = active && selectedByString.get(s)===null;
-    const on = active && !muted;
-    if(muted) anyMuted=true;
-    d.className = 'dot' + (on?' on':'') + (muted?' mutedGlow':'');
-    strip.appendChild(d);
+function clearPianoActive(pianoEl){
+  for(let midi=MIN_MIDI; midi<=MAX_MIDI; midi++){
+    const el=document.getElementById(`${pianoEl.id}-key${midi}`);
+    if(el) el.classList.remove('active');
   }
-  if(anyMuted) muteX.classList.add('glow'); else muteX.classList.remove('glow');
 }
-function updateOpenNamesAndHeader(){
+function updatePianoHighlights(){
+  const midis=getSelectedMidis();
+  const p1=document.getElementById('piano');
+  const p2=document.getElementById('pianoM');
+  [p1,p2].forEach(p=>{
+    if(!p) return;
+    clearPianoActive(p);
+    for(const m of midis){
+      const el=document.getElementById(`${p.id}-key${m}`);
+      if(el) el.classList.add('active');
+    }
+  });
+}
+
+function updateHeaders(){
   const tuning=currentTuning();
-  for(const s of ALL_COLS){
-    const wrap=document.getElementById(`slw${s}`);
-    const open=document.getElementById(`open${s}`);
-    if(!wrap || !open) continue;
+  const updateRow=(rowId)=>{
+    for(const s of ALL_COLS){
+      const wrap=document.getElementById(`${rowId}-slw${s}`);
+      const open=document.getElementById(`${rowId}-open${s}`);
+      if(!wrap || !open) continue;
 
-    if(!activeStrings.includes(s)){
-      wrap.classList.add('disabled');
-      wrap.classList.remove('muted','mutedGlow');
-      open.textContent="—";
-      continue;
+      if(!activeStrings.includes(s)){
+        wrap.classList.add('disabled');
+        wrap.classList.remove('muted','mutedGlow');
+        open.textContent="—";
+      }else{
+        wrap.classList.remove('disabled');
+        open.textContent = midiToName(tuning[s]);
+        if(selectedByString.get(s)===null){
+          wrap.classList.add('muted','mutedGlow');
+        }else{
+          wrap.classList.remove('muted','mutedGlow');
+        }
+      }
     }
-    wrap.classList.remove('disabled');
-    open.textContent = midiToName(tuning[s]);
-
-    if(selectedByString.get(s)===null){
-      wrap.classList.add('muted','mutedGlow');
-    }else{
-      wrap.classList.remove('muted','mutedGlow');
-    }
-  }
+  };
+  updateRow('stringsRow');
+  updateRow('stringsRowM');
 }
-function syncBoardMutedCols(){
+
+function syncBoardDisabledAndMuted(){
   document.querySelectorAll('.cell').forEach(cell=>{
     const s=Number(cell.dataset.string);
     if(!activeStrings.includes(s)){
@@ -1144,65 +1007,27 @@ function syncBoardMutedCols(){
     else cell.classList.remove('mutedcol');
   });
 }
+
 function markSelectedCells(){
   document.querySelectorAll('.cell.selected').forEach(el=>el.classList.remove('selected'));
   for(const s of ALL_COLS){
     const f = selectedByString.get(s);
     if(f===null) continue;
-    const cell=document.querySelector(`.cell[data-string="${s}"][data-fret="${f}"]`);
-    if(cell) cell.classList.add('selected');
-  }
-}
-function updateXButtons(){
-  for(const s of ALL_COLS){
-    const muted = (selectedByString.get(s) === null);
-    const active = activeStrings.includes(s);
-
-    const h=document.getElementById(`xH${s}`);
-    const st=document.getElementById(`xS${s}`);
-    [h,st].forEach(btn=>{
-      if(!btn) return;
-      if(!active){
-        btn.classList.add('disabled');
-        btn.classList.remove('on');
-        return;
-      }
-      btn.classList.remove('disabled');
-      if(muted) btn.classList.add('on'); else btn.classList.remove('on');
+    document.querySelectorAll(`.cell[data-string="${s}"][data-fret="${f}"]`).forEach(cell=>{
+      cell.classList.add('selected');
     });
   }
 }
 
 function updateUI(){
-  updateMuteDots();
-  updateOpenNamesAndHeader();
-  syncBoardMutedCols();
-
-  clearPianoActive();
-  const midis=getSelectedMidis();
-  for(const m of midis){
-    const el=document.getElementById(`key${m}`);
-    if(el) el.classList.add('active');
-  }
-
-  updateXButtons();
+  updateHeaders();
+  syncBoardDisabledAndMuted();
+  markSelectedCells();
+  updatePianoHighlights();
   scheduleSave();
 }
 
-/* ===================== CHORD ENGINE (COMMON SHAPES ONLY) ===================== */
-const QUALITIES = [
-  {id:"maj",  label:""},
-  {id:"min",  label:"m"},
-  {id:"5",    label:"5"},
-  {id:"7",    label:"7"},
-  {id:"maj7", label:"maj7"},
-  {id:"m7",   label:"m7"},
-  {id:"sus2", label:"sus2"},
-  {id:"sus4", label:"sus4"},
-  {id:"6",    label:"6"},
-  {id:"add9", label:"add9"},
-  {id:"dim",  label:"dim"},
-];
+/* ===================== CHORD ENGINE (common shapes only) ===================== */
 const qualityLabel = (qid)=> (QUALITIES.find(x=>x.id===qid)?.label ?? "");
 
 const OPEN_FORMS = {
@@ -1232,29 +1057,24 @@ const OPEN_FORMS = {
   "D:dim":  {6:null,5:null,4:0,3:1,2:0,1:1},
 };
 
-// barre templates
 const BARRE = [
-  // E-family
   {family:"E", q:"maj",  rootString:6, offs:{6:0,5:2,4:2,3:1,2:0,1:0}},
   {family:"E", q:"min",  rootString:6, offs:{6:0,5:2,4:2,3:0,2:0,1:0}},
   {family:"E", q:"7",    rootString:6, offs:{6:0,5:2,4:0,3:1,2:0,1:0}},
   {family:"E", q:"maj7", rootString:6, offs:{6:0,5:2,4:1,3:1,2:0,1:0}},
   {family:"E", q:"m7",   rootString:6, offs:{6:0,5:2,4:0,3:0,2:0,1:0}},
   {family:"E", q:"sus4", rootString:6, offs:{6:0,5:2,4:2,3:2,2:0,1:0}},
-  {family:"E", q:"sus2", rootString:6, offs:{6:0,5:2,4:2,3:4,2:0,1:0}},
   {family:"E", q:"6",    rootString:6, offs:{6:0,5:2,4:2,3:1,2:2,1:0}},
   {family:"E", q:"add9", rootString:6, offs:{6:0,5:2,4:2,3:1,2:0,1:2}},
   {family:"E", q:"dim",  rootString:6, offs:{6:0,5:1,4:2,3:0,2:2,1:0}},
   {family:"E", q:"5",    rootString:6, offs:{6:0,5:2,4:2,3:null,2:null,1:null}},
 
-  // A-family
   {family:"A", q:"maj",  rootString:5, offs:{6:null,5:0,4:2,3:2,2:2,1:0}},
   {family:"A", q:"min",  rootString:5, offs:{6:null,5:0,4:2,3:2,2:1,1:0}},
   {family:"A", q:"7",    rootString:5, offs:{6:null,5:0,4:2,3:0,2:2,1:0}},
   {family:"A", q:"maj7", rootString:5, offs:{6:null,5:0,4:2,3:1,2:2,1:0}},
   {family:"A", q:"m7",   rootString:5, offs:{6:null,5:0,4:2,3:0,2:1,1:0}},
   {family:"A", q:"sus4", rootString:5, offs:{6:null,5:0,4:2,3:2,2:3,1:0}},
-  {family:"A", q:"sus2", rootString:5, offs:{6:null,5:0,4:2,3:2,2:0,1:0}},
   {family:"A", q:"6",    rootString:5, offs:{6:null,5:0,4:2,3:2,2:2,1:2}},
   {family:"A", q:"add9", rootString:5, offs:{6:null,5:0,4:2,3:2,2:0,1:0}},
   {family:"A", q:"dim",  rootString:5, offs:{6:null,5:0,4:1,3:2,2:1,1:2}},
@@ -1391,9 +1211,8 @@ function pickPreferredVoicing(voicings){
 /* bass: apply root only on chosen follow string */
 function applyBassRootOnly(rootPc){
   ALL_COLS.forEach(s=>selectedByString.set(s,null));
-  markSelectedCells();
+  if(!activeStrings.includes(bassFollowString)) { updateUI(); return; }
 
-  if(!activeStrings.includes(bassFollowString)) return;
   const tuning=currentTuning();
   const s=bassFollowString;
   const openPc=mod(tuning[s],12);
@@ -1403,21 +1222,17 @@ function applyBassRootOnly(rootPc){
   if(f>FRETS) f=0;
 
   selectedByString.set(s,f);
-  markSelectedCells();
   updateUI();
 }
 
 function applyVoicing(voicing){
   ALL_COLS.forEach(s=>selectedByString.set(s,null));
-  markSelectedCells();
   if(!voicing){ updateUI(); return; }
-
   for(const s of ALL_COLS){
     const f=voicing[s];
     if(f===null) continue;
     selectedByString.set(s,f);
   }
-  markSelectedCells();
   updateUI();
 }
 
@@ -1432,7 +1247,7 @@ function rebuildChordInventory(){
         if(!voicings.length) continue;
         allChordItems.push({rootPc:r,qid:q.id,voicings});
       }else{
-        // show only if it exists in guitar common shapes (filter "impossible")
+        // show only if exists in common guitar shapes
         const saved = {instrument, baseTuning, activeStrings, capo, powerRootPref};
         instrument="guitar"; baseTuning=structuredClone(GUITAR_6); activeStrings=[6,5,4,3,2,1]; capo=0; powerRootPref="auto";
         const voicings=generateCommonVoicings(r,q.id);
@@ -1515,20 +1330,21 @@ function setInstrument(val){
     capo=0;
   }
 
-  // enable/disable controls
   const capoSel=document.getElementById('capoSel');
   const voSel=document.getElementById('voicingSel');
-  const slashToggle=document.getElementById('slashMode');
   const bassNoteSel=document.getElementById('bassNoteSel');
   const bassFollowSel=document.getElementById('bassFollowSel');
   const powerSel=document.getElementById('powerRootSel');
+  const slashSel=document.getElementById('slashSel');
 
   if(instrument!=="guitar"){
     capoSel.disabled=true;
     voSel.disabled=true;
-    slashToggle.disabled=true;
-    bassNoteSel.style.display="none";
     powerSel.disabled=true;
+
+    slashMode=false;
+    slashSel.value="off";
+    bassNoteSel.style.display="none";
 
     bassFollowSel.style.display="inline-block";
     repopulateBassFollowSel();
@@ -1536,21 +1352,21 @@ function setInstrument(val){
   }else{
     capoSel.disabled=false;
     voSel.disabled=false;
-    slashToggle.disabled=false;
     powerSel.disabled=false;
 
     bassFollowSel.style.display="none";
     bassNoteSel.style.display = slashMode ? "inline-block" : "none";
   }
 
-  buildStringsHeaderAndX();
+  buildStringsHeader('stringsRow');
+  buildStringsHeader('stringsRowM');
+
   rebuildChordInventory();
   renderAllChordViews();
-  markSelectedCells();
+
   updateUI();
 }
 
-// click: fret cells
 document.addEventListener('click',(e)=>{
   const cell=e.target.closest('.cell');
   if(!cell) return;
@@ -1559,54 +1375,29 @@ document.addEventListener('click',(e)=>{
   const f=Number(cell.dataset.fret);
   if(!activeStrings.includes(s)) return;
 
-  // clear other selection on the same string
-  document.querySelectorAll(`.cell.selected[data-string="${s}"]`).forEach(el=>el.classList.remove('selected'));
-
   const cur=selectedByString.get(s);
   if(cur===f){
     // same => mute
     selectedByString.set(s,null);
   }else{
     selectedByString.set(s,f);
-    cell.classList.add('selected');
     pulseCell(cell);
-
     const tuning=currentTuning();
     poko(midiToFreq(tuning[s]+f), 0.12);
   }
   updateUI();
 });
 
-// click: X buttons (header/sticky)
-document.addEventListener('click',(e)=>{
-  const xb = e.target.closest('.xbtn');
-  if(!xb) return;
-  const s = Number(xb.dataset.string);
-  if(!activeStrings.includes(s)) return;
-
-  const now = selectedByString.get(s);
-  if(now === null){
-    // unmute -> open string
-    selectedByString.set(s, 0);
-  }else{
-    // mute
-    selectedByString.set(s, null);
-    document.querySelectorAll(`.cell.selected[data-string="${s}"]`).forEach(el=>el.classList.remove('selected'));
-  }
-  markSelectedCells();
-  updateUI();
-});
-
 document.getElementById('btnClear').onclick=()=>{
   ALL_COLS.forEach(s=>selectedByString.set(s,null));
-  markSelectedCells();
   updateUI();
 };
 
 document.getElementById('instSel').onchange=(e)=>{ setInstrument(e.target.value); scheduleSave(); };
 document.getElementById('tuneSel').onchange=(e)=>{
   tuneOffset=Number(e.target.value);
-  buildStringsHeaderAndX();
+  buildStringsHeader('stringsRow');
+  buildStringsHeader('stringsRowM');
   rebuildChordInventory();
   renderAllChordViews();
   updateUI();
@@ -1614,7 +1405,8 @@ document.getElementById('tuneSel').onchange=(e)=>{
 document.getElementById('capoSel').onchange=(e)=>{
   capo=Number(e.target.value);
   if(instrument!=="guitar"){ capo=0; e.target.value="0"; }
-  buildStringsHeaderAndX();
+  buildStringsHeader('stringsRow');
+  buildStringsHeader('stringsRowM');
   rebuildChordInventory();
   renderAllChordViews();
   updateUI();
@@ -1626,11 +1418,9 @@ document.getElementById('powerRootSel').onchange=(e)=>{
   renderAllChordViews();
   updateUI();
 };
-document.getElementById('slashMode').onchange=(e)=>{
-  slashMode=e.target.checked;
-  const sel=document.getElementById('bassNoteSel');
-  if(slashMode && instrument==="guitar") sel.style.display="inline-block";
-  else sel.style.display="none";
+document.getElementById('slashSel').onchange=(e)=>{
+  slashMode = (e.target.value==="on" && instrument==="guitar");
+  document.getElementById('bassNoteSel').style.display = slashMode ? "inline-block" : "none";
   renderAllChordViews();
   scheduleSave();
 };
@@ -1644,7 +1434,6 @@ document.getElementById('bassFollowSel').onchange=(e)=>{
   scheduleSave();
 };
 
-// share
 document.getElementById('btnShare').onclick = async ()=>{
   saveStateToHash();
   const url = location.href;
@@ -1683,80 +1472,13 @@ if(pcQual) pcQual.onchange = ()=>renderAllChordViews();
 if(mobSearch) mobSearch.oninput = ()=>renderAllChordViews();
 if(mobQual) mobQual.onchange = ()=>renderAllChordViews();
 
-/* ===================== Piano scroll sync ===================== */
-function setupScrollSync(){
-  const scrollArea = document.getElementById('scrollArea');
-  const piano = document.getElementById('piano');
-  if(!scrollArea || !piano) return;
-
-  scrollArea.addEventListener('scroll', ()=>{
-    piano.scrollTop = scrollArea.scrollTop;
-  }, {passive:true});
-
-  // forward scroll gestures on piano to board (useful on mobile)
-  piano.addEventListener('wheel', (e)=>{
-    scrollArea.scrollTop += e.deltaY;
-    e.preventDefault();
-  }, {passive:false});
-
-  let startY = null;
-  piano.addEventListener('touchstart', (e)=>{
-    startY = e.touches[0].clientY;
-  }, {passive:true});
-
-  piano.addEventListener('touchmove', (e)=>{
-    if(startY === null) return;
-    const y = e.touches[0].clientY;
-    const dy = startY - y;
-    scrollArea.scrollTop += dy;
-    startY = y;
-    e.preventDefault();
-  }, {passive:false});
-}
-
-/* ===================== Mobile bottom sheet ===================== */
-function setupSheet(){
-  const sheet = document.getElementById('sheet');
-  const toggle = document.getElementById('sheetToggle');
-  const header = document.getElementById('sheetHeader');
-  if(!sheet || !toggle || !header) return;
-
-  let open = false;
-  const setOpen = (v)=>{
-    open = v;
-    sheet.classList.toggle('open', open);
-    toggle.textContent = open ? "閉じる" : "開く";
-  };
-  toggle.onclick = ()=> setOpen(!open);
-
-  // drag gesture (simple)
-  let startY=null, startOpen=false;
-  header.addEventListener('touchstart', (e)=>{
-    startY = e.touches[0].clientY;
-    startOpen = open;
-  }, {passive:true});
-
-  header.addEventListener('touchmove', (e)=>{
-    if(startY===null) return;
-    const y = e.touches[0].clientY;
-    const dy = y - startY; // down = positive
-    // if dragging up enough -> open, down enough -> close
-    if(dy < -24) setOpen(true);
-    if(dy >  24) setOpen(false);
-  }, {passive:true});
-
-  // default: peek only
-  setOpen(false);
-}
-
 /* ===================== INIT ===================== */
-function buildAllStatic(){
-  buildCapoSel();
-  buildQualitySel(document.getElementById('qualitySel'));
-  buildQualitySel(document.getElementById('qualitySelM'));
-  buildBassNoteSel();
-  buildPiano();
-  buildBoard();
+function rebuildPianos(){
+  const p1=document.getElementById('piano');
+  const p2=document.getElementById('pianoM');
+  if(p1) buildPianoFit(p1);
+  if(p2) buildPianoFit(p2);
+  updatePianoHighlights();
 }
 
 function applyStateToControls(){
@@ -1765,32 +1487,35 @@ function applyStateToControls(){
   document.getElementById('capoSel').value = String(capo);
   document.getElementById('voicingSel').value = voicingPref;
   document.getElementById('powerRootSel').value = powerRootPref;
-  document.getElementById('slashMode').checked = slashMode;
+  document.getElementById('slashSel').value = slashMode ? "on":"off";
   document.getElementById('bassNoteSel').value = pcToName(slashBassPc);
 }
 
 function init(){
-  buildAllStatic();
+  buildCapoSel();
+  buildQualitySel(document.getElementById('qualitySel'));
+  buildQualitySel(document.getElementById('qualitySelM'));
+  buildBassNoteSel();
 
-  const had = loadStateFromHash();
+  buildBoard('board');
+  buildBoard('boardM');
+
+  loadStateFromHash();
   applyStateToControls();
 
   setInstrument(instrument);
 
-  // bass follow options
-  if(instrument!=="guitar"){
-    repopulateBassFollowSel();
-    document.getElementById('bassFollowSel').value = String(bassFollowString);
-  }
+  // first piano build (needs layout)
+  rebuildPianos();
 
-  markSelectedCells();
   updateUI();
-
-  setupScrollSync();
-  setupSheet();
-
-  if(!had) saveStateToHash();
+  saveStateToHash();
 }
+
+window.addEventListener('resize', ()=>{
+  rebuildPianos();
+});
+
 init();
 </script>
 </body>
