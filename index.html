@@ -361,28 +361,29 @@ select:hover, .btn:hover, input:hover{
 .badge.ng{ opacity:.7; }
 
 /* =========================
-   ✅ ここが重要（指板2個問題の対策）
-   PCでは必ず .main、モバイル(タッチ端末)だけ .mobileWrap を表示
+   ✅ 二重表示を根絶：幅だけで出し分け
    ========================= */
-.mobileWrap{ display:none !important; }
 
-@media (max-width: 900px) and (hover: none) and (pointer: coarse){
+/* デフォルト（PC） */
+.mobileWrap{ display:none; }
+
+/* 900px以下：モバイルUI */
+@media (max-width: 900px){
+  .main{ display:none; }
+
+  .mobileWrap{
+    display:grid;
+    grid-template-columns: 156px 1fr var(--pW);
+    gap: 10px;
+    align-items:start;
+  }
+
   :root{
     --cellW: 34px;
     --cellH: 32px;
     --fretW: 38px;
     --spacerH: 26px;
     --pW: 92px;
-  }
-
-  /* hide PC panels on mobile */
-  .main{ display:none; }
-
-  .mobileWrap{
-    display:grid !important;
-    grid-template-columns: 156px 1fr var(--pW);
-    gap: 10px;
-    align-items:start;
   }
 
   /* smaller controls but still tappable */
@@ -430,12 +431,13 @@ select:hover, .btn:hover, input:hover{
     min-height: 60vh;
   }
 }
+
 @media (max-width: 420px){
   :root{ --pW: 84px; }
   .mobileWrap{ grid-template-columns: 146px 1fr var(--pW); }
 }
 
-/* ✅ ここからPC用（420pxの外に出す） */
+/* ✅ PC用 */
 @media (min-width: 901px){
 
   /* 1) 左右パネルを同じ高さにして、縦を画面にフィット */
@@ -1498,26 +1500,36 @@ if(mobSearch) mobSearch.oninput = ()=>renderAllChordViews();
 if(mobQual) mobQual.onchange = ()=>renderAllChordViews();
 
 /* ===================== Piano rebuild (fix disappearing) ===================== */
-function rebuildPianosOnce(){
-  const p1=document.getElementById('piano');
-  const p2=document.getElementById('pianoM');
-  let ok1=true, ok2=true;
-  if(p1) ok1 = buildPianoFit(p1);
-  if(p2) ok2 = buildPianoFit(p2);
-  updatePianoHighlights();
-  return ok1 && ok2;
+function isVisible(el){
+  // display:none の要素は offsetParent が null になりやすい
+  return !!(el && el.offsetParent !== null);
 }
+
 function rebuildPianosDeferred(){
-  // ✅ 描画後に再生成（clientHeight=0 対策）
+  // ✅ 描画後に再生成（display:none / clientHeight=0 対策）
   requestAnimationFrame(()=>{
     let tries=0;
+
     const loop=()=>{
       tries++;
-      const ok = rebuildPianosOnce();
-      if(!ok && tries<10){
-        setTimeout(loop, 60);
+
+      const p1=document.getElementById('piano');
+      const p2=document.getElementById('pianoM');
+
+      let ok = true;
+
+      // 表示されている方だけ作る（隠れている方は触らない）
+      if(p1 && isVisible(p1)) ok = buildPianoFit(p1) && ok;
+      if(p2 && isVisible(p2)) ok = buildPianoFit(p2) && ok;
+
+      updatePianoHighlights();
+
+      // まだ高さが取れない場合はリトライ
+      if(!ok && tries < 20){
+        setTimeout(loop, 80);
       }
     };
+
     loop();
   });
 }
