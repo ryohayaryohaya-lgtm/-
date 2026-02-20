@@ -430,26 +430,29 @@ select:hover, .btn:hover, input:hover{
     min-height: 60vh;
   }
 }
-
-@media (max-width: 420px) and (hover: none) and (pointer: coarse){
+@media (max-width: 420px){
   :root{ --pW: 84px; }
-  .mobileWrap{ grid-template-columns: 146px 1fr var(--pW); }@media (min-width: 901px){
+  .mobileWrap{ grid-template-columns: 146px 1fr var(--pW); }
+}
+
+/* ✅ ここからPC用（420pxの外に出す） */
+@media (min-width: 901px){
 
   /* 1) 左右パネルを同じ高さにして、縦を画面にフィット */
   .main{
     align-items: stretch;
-    height: calc(100vh - 110px); /* ←上のヘッダー分。合わなければ 90〜140px で調整 */
+    height: calc(100vh - 110px); /* 90〜140pxで調整 */
   }
 
   /* 2) panelを縦Flexにして、title以外を全て“残り高さ”に */
   .panel{
     display: flex;
     flex-direction: column;
-    min-height: 0; /* 重要：子のスクロールが効く */
+    min-height: 0;
   }
   .panel-body{
     flex: 1;
-    min-height: 0; /* 重要：scrollが潰れない */
+    min-height: 0;
   }
 
   /* 3) 左：指板+ピアノを同じ高さで並べる */
@@ -457,8 +460,6 @@ select:hover, .btn:hover, input:hover{
     height: 100%;
     align-items: stretch;
   }
-
-  /* 左側（指板）カラムも縦いっぱい */
   .fret-piano > div:first-child{
     height: 100%;
     display: flex;
@@ -466,17 +467,14 @@ select:hover, .btn:hover, input:hover{
     min-height: 0;
   }
 
-  /* strings-rowは固定、scrollが残り全部 */
-  #stringsRow{
-    flex: 0 0 auto;
-  }
+  #stringsRow{ flex: 0 0 auto; }
+
   #scrollArea{
     flex: 1;
-    max-height: none; /* 既存の 78vh を無効化 */
+    max-height: none;
     min-height: 0;
   }
 
-  /* ピアノは“左の高さ”と完全一致 */
   #piano{
     height: 100%;
     min-height: 0;
@@ -490,14 +488,13 @@ select:hover, .btn:hover, input:hover{
   }
   .right .chordlist{
     flex: 1;
-    max-height: none; /* 既存の 74vh を無効化 */
+    max-height: none;
     min-height: 0;
   }
 
-  /* 5) バランス最適化：右を少し細く / 左を広く（好みで調整） */
+  /* 5) バランス最適化 */
   .right{ flex: 0 0 460px; min-width: 460px; }
   .left{  flex: 1 1 auto; min-width: 780px; }
-}
 }
 </style>
 </head>
