@@ -6,9 +6,6 @@
 <title>ギター／ベースピアノ変換サイト</title>
 
 <style>
-/* =========================
-   THEME (White/Black Neon)
-   ========================= */
 :root{
   --bg0:#050505;
   --bg1:#0b0b0b;
@@ -17,13 +14,13 @@
   --glow: 0 0 10px rgba(255,255,255,.40), 0 0 22px rgba(255,255,255,.22);
   --glowStrong: 0 0 12px rgba(255,255,255,.72), 0 0 34px rgba(255,255,255,.36);
 
-  /* board */
+  /* board (PC default) */
   --cellW: 40px;
   --cellH: 34px;
   --fretW: 46px;
   --spacerH: 34px;
 
-  /* piano (PC) */
+  /* piano width */
   --pW: 190px;
 
   --radius: 18px;
@@ -54,9 +51,7 @@ body::before{
 
 .wrap{ max-width: 1500px; margin:0 auto; padding: 12px; }
 
-/* =========================
-   Header / Controls
-   ========================= */
+/* ===== Header / Controls ===== */
 .topbar{
   display:flex;
   align-items:flex-end;
@@ -85,7 +80,6 @@ h1{
   flex-wrap:wrap;
   align-items:center;
 }
-
 select, .btn, input{
   border:1px solid rgba(255,255,255,.30);
   background: rgba(10,10,10,.55);
@@ -95,7 +89,7 @@ select, .btn, input{
   font-weight:1000;
   font-size:14px;
   cursor:pointer;
-  transition: transform .06s ease, box-shadow .2s ease, border-color .2s ease, background .2s ease;
+  transition: transform .06s ease, box-shadow .2s ease, border-color .2s ease;
   outline:none;
   touch-action: manipulation;
 }
@@ -110,9 +104,7 @@ select:hover, .btn:hover, input:hover{
   box-shadow: inset 0 0 0 1px rgba(255,255,255,.12);
 }
 
-/* =========================
-   Panels / Layout (PC)
-   ========================= */
+/* ===== Panels / PC layout ===== */
 .main{
   display:flex;
   gap:12px;
@@ -146,9 +138,7 @@ select:hover, .btn:hover, input:hover{
   max-width: 640px;
 }
 
-/* =========================
-   Fretboard + Piano (PC)
-   ========================= */
+/* ===== Fretboard ===== */
 .fret-piano{ display:flex; gap:12px; align-items:flex-start; }
 .fret-piano > div:first-child{ flex: 1 1 auto; min-width: 0; }
 
@@ -185,7 +175,7 @@ select:hover, .btn:hover, input:hover{
 .slabwrap.muted{ opacity:.40; background: rgba(255,255,255,.06); }
 .slabwrap.mutedGlow{ opacity:.55; box-shadow: 0 0 18px rgba(255,255,255,.40); border-color: rgba(255,255,255,.40); }
 
-/* scroll area */
+/* scroll for board (PC) */
 .scroll{
   max-height: 78vh;
   overflow:auto;
@@ -212,7 +202,6 @@ select:hover, .btn:hover, input:hover{
     0 0 18px rgba(255,255,255,.08);
   background: rgba(0,0,0,.25);
 }
-
 .fret{
   display:flex;
   align-items:center;
@@ -255,7 +244,6 @@ select:hover, .btn:hover, input:hover{
 .cell.openrow:hover{ background: linear-gradient(180deg, rgba(255,255,255,.18), rgba(0,0,0,.34)); }
 .cell.mutedcol{ opacity:.28; background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(0,0,0,.50)); }
 
-/* spacer between 0 and 1 */
 .spacer{
   height: var(--spacerH);
   background: rgba(255,255,255,.04);
@@ -263,7 +251,6 @@ select:hover, .btn:hover, input:hover{
 }
 .spacer.left{ border-right:1px solid rgba(255,255,255,.18); }
 
-/* pulse */
 @keyframes pulseGlow{
   0%   { box-shadow: inset 0 0 0 2px rgba(255,255,255,.20), 0 0 0 rgba(255,255,255,0); }
   40%  { box-shadow: inset 0 0 0 2px rgba(255,255,255,.62), 0 0 30px rgba(255,255,255,.45); }
@@ -271,7 +258,6 @@ select:hover, .btn:hover, input:hover{
 }
 .cell.pulse{ animation: pulseGlow .45s ease-out; }
 
-/* position marks */
 .cell .posmark{
   position:absolute;
   width:9px; height:9px;
@@ -292,10 +278,7 @@ select:hover, .btn:hover, input:hover{
   box-shadow: var(--glow);
 }
 
-/* =========================
-   Piano (silent highlight)
-   NOTE: actual scaling is done in JS to fit viewport.
-   ========================= */
+/* ===== Piano (silent highlight) ===== */
 .piano{
   width:var(--pW);
   position:relative;
@@ -346,12 +329,9 @@ select:hover, .btn:hover, input:hover{
   box-shadow: var(--glowStrong);
 }
 
-/* =========================
-   Chords (PC right)
-   ========================= */
+/* ===== Chords (PC right) ===== */
 .chordlist{ max-height: 74vh; overflow:auto; padding-right:6px; }
 .chordgrid{ display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; }
-
 .cbtn{
   border:1px solid rgba(255,255,255,.20);
   background: rgba(0,0,0,.35);
@@ -381,107 +361,80 @@ select:hover, .btn:hover, input:hover{
 .badge.ng{ opacity:.7; }
 
 /* =========================
-   MOBILE: compact 3-column fixed layout
-   left fixed chords, center board, right fixed piano
+   MOBILE: 3 columns (not fixed)
+   - keep layout concept (left chords / center board / right piano)
+   - but no fixed panels -> board won't be hidden
+   - chord buttons smaller
    ========================= */
-.mobileLeft, .mobileRight{ display:none; }
+.mobileWrap{ display:none; } /* IMPORTANT: PCで2枚目の指板が出ないように完全非表示 */
 
 @media (max-width: 900px){
   :root{
-    /* compact board */
     --cellW: 34px;
     --cellH: 32px;
-    --fretW: 40px;
-    --spacerH: 28px;
-
-    /* slim piano */
+    --fretW: 38px;
+    --spacerH: 26px;
     --pW: 92px;
   }
 
-  .main{ display:block; }
-  .left, .right{ display:none; } /* hide PC panels */
+  /* hide PC panels on mobile */
+  .main{ display:none; }
 
-  .mobileLeft, .mobileRight{ display:block; }
-
-  /* fixed side panels */
-  .mobileLeft{
-    position: fixed;
-    left: 8px;
-    top: 92px;     /* below topbar */
-    bottom: 8px;
-    width: 150px;
-    z-index: 50;
-  }
-  .mobileRight{
-    position: fixed;
-    right: 8px;
-    top: 92px;
-    bottom: 8px;
-    width: var(--pW);
-    z-index: 50;
+  .mobileWrap{
+    display:grid;
+    grid-template-columns: 156px 1fr var(--pW);
+    gap: 10px;
+    align-items:start;
   }
 
-  /* center area must avoid side panels */
-  .mobileCenter{
-    padding-left: 166px;  /* left panel + gap */
-    padding-right: calc(var(--pW) + 16px); /* right panel + gap */
-  }
+  /* smaller controls but still tappable */
+  select, .btn, input{ font-size: 14px; padding: 10px 10px; border-radius: 14px; }
 
-  /* make top controls compact but still tappable */
-  select, .btn, input{
-    font-size: 14px;
+  .mPanelTitle{
     padding: 10px 10px;
-    border-radius: 14px;
+    font-weight:1000;
+    font-size:13px;
+    border-bottom: 1px solid rgba(255,255,255,.14);
+    background: linear-gradient(90deg, rgba(255,255,255,.10), rgba(0,0,0,0));
   }
+  .mPanelBody{ padding: 10px; }
 
-  /* mobile chord list: 1 column, big-ish buttons */
+  .mChords .mPanelBody{ padding: 8px; }
+  .mChords input{ width:100%; padding:10px; font-size:13px; }
+  .mChords select{ width:100%; padding:10px; font-size:13px; }
+
+  /* ✅ スマホ：コード表示をもっと小さく */
   .mChordList{
-    height: calc(100% - 54px);
+    margin-top: 8px;
+    height: calc(100vh - 230px);
     overflow:auto;
-    padding: 10px 10px 12px;
+    padding-right:6px;
   }
   .mChordGrid{
     display:grid;
     grid-template-columns: 1fr;
-    gap: 10px;
+    gap: 8px;
   }
   .mChordGrid .cbtn{
-    padding: 14px 10px;
-    font-size: 16px;
-    border-radius: 16px;
+    padding: 10px 8px;
+    font-size: 13px;    /* 小さく */
+    border-radius: 14px;
   }
 
-  /* mobile piano full visible in its panel */
-  .piano{
-    height: 100%;
+  /* board should not be crushed; let it scroll */
+  .mBoard .scroll{
+    max-height: calc(100vh - 210px);
   }
 
-  /* mobile board panel */
-  .mBoardPanel{
-    margin-top: 8px;
-    border-radius: 18px;
-    border:1px solid rgba(255,255,255,.18);
-    background: rgba(10,10,10,.55);
-    box-shadow: var(--shadow);
-    overflow:hidden;
+  .mPiano .piano{
+    width: var(--pW);
+    height: calc(100vh - 170px); /* 見える高さ確保 */
   }
-  .mBoardHead{
-    padding: 10px 12px;
-    border-bottom: 1px solid rgba(255,255,255,.14);
-    background: linear-gradient(90deg, rgba(255,255,255,.10), rgba(0,0,0,0));
-    font-weight: 1000;
-    font-size: 14px;
-  }
-  .mBoardBody{ padding: 10px 10px 12px; }
-
-  .scroll{ max-height: calc(100vh - 210px); } /* center board scroll height */
 }
 
-/* very small phones: squeeze a bit more */
 @media (max-width: 420px){
   :root{ --pW: 84px; }
-  .mobileLeft{ width: 140px; }
-  .mobileCenter{ padding-left: 156px; }
+  .mobileWrap{ grid-template-columns: 146px 1fr var(--pW); }
 }
 </style>
 </head>
@@ -571,34 +524,35 @@ select:hover, .btn:hover, input:hover{
     </div>
   </div>
 
-  <!-- MOBILE layout (fixed left chords + center board + fixed right piano) -->
-  <div class="mobileLeft panel">
-    <div class="panel-title" style="font-size:14px;">コード</div>
-    <div style="padding:10px 10px 0;">
-      <input id="searchBoxM" placeholder="検索 (C, Am, C5, C/E)" style="width:100%;">
-      <div style="height:8px;"></div>
-      <select id="qualitySelM" style="width:100%;"></select>
-    </div>
-    <div class="mChordList">
-      <div class="mChordGrid" id="chordGridM"></div>
-    </div>
-  </div>
+  <!-- MOBILE layout (not fixed, 3 columns) -->
+  <div class="mobileWrap">
+    <div class="panel mChords">
+      <div class="mPanelTitle">コード</div>
+      <div class="mPanelBody">
+        <input id="searchBoxM" placeholder="検索 (C, Am, C5, C/E)">
+        <div style="height:8px;"></div>
+        <select id="qualitySelM"></select>
 
-  <div class="mobileRight panel">
-    <div class="panel-title" style="font-size:14px;">Piano</div>
-    <div class="panel-body" style="padding:8px;">
-      <div class="piano" id="pianoM"></div>
+        <div class="mChordList">
+          <div class="mChordGrid" id="chordGridM"></div>
+        </div>
+      </div>
     </div>
-  </div>
 
-  <div class="mobileCenter">
-    <div class="mBoardPanel">
-      <div class="mBoardHead">指板（0〜22）</div>
-      <div class="mBoardBody">
+    <div class="panel mBoard">
+      <div class="mPanelTitle">指板（0〜22）</div>
+      <div class="mPanelBody">
         <div class="strings-row" id="stringsRowM"></div>
         <div class="scroll" id="scrollAreaM">
           <div class="board" id="boardM"></div>
         </div>
+      </div>
+    </div>
+
+    <div class="panel mPiano">
+      <div class="mPanelTitle">Piano</div>
+      <div class="mPanelBody" style="padding:8px;">
+        <div class="piano" id="pianoM"></div>
       </div>
     </div>
   </div>
@@ -679,14 +633,12 @@ function saveStateToHash(){
     parts.push(`${s}:${f===null?"x":f}`);
   }
   params.set("pos", parts.join("|"));
-
   const newHash = "#" + params.toString();
   if(location.hash !== newHash) history.replaceState(null, "", newHash);
 }
 function loadStateFromHash(){
   if(!location.hash || location.hash.length<2) return false;
   const params = new URLSearchParams(location.hash.slice(1));
-
   const i = params.get("i"); if(i) instrument = i;
   const t = params.get("t"); if(t!==null && t!=="") tuneOffset = Number(t);
   const c = params.get("c"); if(c!==null && c!=="") capo = Number(c);
@@ -723,7 +675,6 @@ function getCtx(){
 function poko(freq, duration=0.12){
   const ctx = getCtx();
   const now = ctx.currentTime;
-
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
   const filt = ctx.createBiquadFilter();
@@ -755,7 +706,6 @@ function currentTuning(){
   return t;
 }
 
-/* ===================== UI HELPERS ===================== */
 function pulseCell(cell){
   cell.classList.remove('pulse'); void cell.offsetWidth; cell.classList.add('pulse');
 }
@@ -773,6 +723,7 @@ function buildCapoSel(){
     sel.appendChild(o);
   }
 }
+
 const QUALITIES = [
   {id:"maj",  label:""},
   {id:"min",  label:"m"},
@@ -820,6 +771,7 @@ function repopulateBassFollowSel(){
 
 function buildStringsHeader(targetId){
   const row = document.getElementById(targetId);
+  if(!row) return;
   row.innerHTML = "";
 
   const left = document.createElement('div');
@@ -849,6 +801,7 @@ function buildStringsHeader(targetId){
 
 function buildBoard(targetBoardId){
   const board = document.getElementById(targetBoardId);
+  if(!board) return;
   board.innerHTML = "";
 
   const fret0 = document.createElement('div');
@@ -899,26 +852,35 @@ function buildBoard(targetBoardId){
   }
 }
 
-/* Piano build: fit whole range into panel height */
+/* Piano build: fit whole range into element height (avoid 0-height) */
 function buildPianoFit(pianoEl){
+  if(!pianoEl) return;
   pianoEl.innerHTML = "";
-  const h = pianoEl.clientHeight || 600;
+
+  const h = pianoEl.clientHeight;
+  const w = pianoEl.clientWidth;
+
+  // ここが0だと “ピアノ消える” ので、後で再試行する
+  if(h < 60 || w < 40){
+    return false;
+  }
+
   const count = (MAX_MIDI - MIN_MIDI + 1);
-  const stepH = Math.max(6, h / count);          // auto scale
-  const whiteH = stepH;                           // white key height
-  const blackH = stepH * 0.78;                    // black key slightly smaller
-  const blackW = Math.max(52, pianoEl.clientWidth * 0.78);
+  const stepH = Math.max(5, h / count);
+  const whiteH = stepH;
+  const blackH = stepH * 0.78;
+  const blackW = Math.max(44, w * 0.78);
 
   for(let midi=MIN_MIDI; midi<=MAX_MIDI; midi++){
     const y = (midi - MIN_MIDI) * stepH;
     if(!isBlack(midi)){
-      const w=document.createElement('div');
-      w.className="key-white";
-      w.id=`${pianoEl.id}-key${midi}`;
-      w.style.bottom = `${y}px`;
-      w.style.height = `${whiteH}px`;
-      w.textContent = midiToName(midi);
-      pianoEl.appendChild(w);
+      const wEl=document.createElement('div');
+      wEl.className="key-white";
+      wEl.id=`${pianoEl.id}-key${midi}`;
+      wEl.style.bottom = `${y}px`;
+      wEl.style.height = `${whiteH}px`;
+      wEl.textContent = midiToName(midi);
+      pianoEl.appendChild(wEl);
     }else{
       const b=document.createElement('div');
       b.className="key-black";
@@ -930,6 +892,7 @@ function buildPianoFit(pianoEl){
       pianoEl.appendChild(b);
     }
   }
+  return true;
 }
 
 /* ===================== UPDATE UI ===================== */
@@ -970,6 +933,8 @@ function updatePianoHighlights(){
 function updateHeaders(){
   const tuning=currentTuning();
   const updateRow=(rowId)=>{
+    const row=document.getElementById(rowId);
+    if(!row) return;
     for(const s of ALL_COLS){
       const wrap=document.getElementById(`${rowId}-slw${s}`);
       const open=document.getElementById(`${rowId}-open${s}`);
@@ -1207,8 +1172,6 @@ function pickPreferredVoicing(voicings){
   }
   return voicings[0];
 }
-
-/* bass: apply root only on chosen follow string */
 function applyBassRootOnly(rootPc){
   ALL_COLS.forEach(s=>selectedByString.set(s,null));
   if(!activeStrings.includes(bassFollowString)) { updateUI(); return; }
@@ -1224,7 +1187,6 @@ function applyBassRootOnly(rootPc){
   selectedByString.set(s,f);
   updateUI();
 }
-
 function applyVoicing(voicing){
   ALL_COLS.forEach(s=>selectedByString.set(s,null));
   if(!voicing){ updateUI(); return; }
@@ -1237,7 +1199,7 @@ function applyVoicing(voicing){
 }
 
 /* chord inventory + render */
-let allChordItems=[]; // {rootPc,qid,voicings}
+let allChordItems=[];
 function rebuildChordInventory(){
   allChordItems=[];
   for(const q of QUALITIES){
@@ -1259,7 +1221,6 @@ function rebuildChordInventory(){
     }
   }
 }
-
 function passesSearch(item, q){
   if(!q) return true;
   const s=q.toLowerCase().replace(/\s+/g,"");
@@ -1267,8 +1228,8 @@ function passesSearch(item, q){
   const slash=(base+`/${pcToName(slashBassPc)}`).toLowerCase();
   return base.includes(s) || slash.includes(s);
 }
-
 function renderChordGrid(targetGrid, qText, qFilter){
+  if(!targetGrid) return;
   targetGrid.innerHTML="";
 
   let items=allChordItems
@@ -1365,6 +1326,7 @@ function setInstrument(val){
   renderAllChordViews();
 
   updateUI();
+  rebuildPianosDeferred();
 }
 
 document.addEventListener('click',(e)=>{
@@ -1377,8 +1339,7 @@ document.addEventListener('click',(e)=>{
 
   const cur=selectedByString.get(s);
   if(cur===f){
-    // same => mute
-    selectedByString.set(s,null);
+    selectedByString.set(s,null); // mute
   }else{
     selectedByString.set(s,f);
     pulseCell(cell);
@@ -1401,6 +1362,7 @@ document.getElementById('tuneSel').onchange=(e)=>{
   rebuildChordInventory();
   renderAllChordViews();
   updateUI();
+  rebuildPianosDeferred();
 };
 document.getElementById('capoSel').onchange=(e)=>{
   capo=Number(e.target.value);
@@ -1410,6 +1372,7 @@ document.getElementById('capoSel').onchange=(e)=>{
   rebuildChordInventory();
   renderAllChordViews();
   updateUI();
+  rebuildPianosDeferred();
 };
 document.getElementById('voicingSel').onchange=(e)=>{ voicingPref=e.target.value; renderAllChordViews(); scheduleSave(); };
 document.getElementById('powerRootSel').onchange=(e)=>{
@@ -1461,26 +1424,40 @@ function renderAllChordViews(){
   const mobQ = mobSearch ? mobSearch.value.trim() : "";
   const mobF = mobQual ? mobQual.value : "all";
 
-  const gridPC = document.getElementById('chordGrid');
-  const gridM  = document.getElementById('chordGridM');
-
-  if(gridPC) renderChordGrid(gridPC, pcQ, pcF);
-  if(gridM)  renderChordGrid(gridM,  mobQ, mobF);
+  renderChordGrid(document.getElementById('chordGrid'), pcQ, pcF);
+  renderChordGrid(document.getElementById('chordGridM'), mobQ, mobF);
 }
 if(pcSearch) pcSearch.oninput = ()=>renderAllChordViews();
 if(pcQual) pcQual.onchange = ()=>renderAllChordViews();
 if(mobSearch) mobSearch.oninput = ()=>renderAllChordViews();
 if(mobQual) mobQual.onchange = ()=>renderAllChordViews();
 
-/* ===================== INIT ===================== */
-function rebuildPianos(){
+/* ===================== Piano rebuild (fix disappearing) ===================== */
+function rebuildPianosOnce(){
   const p1=document.getElementById('piano');
   const p2=document.getElementById('pianoM');
-  if(p1) buildPianoFit(p1);
-  if(p2) buildPianoFit(p2);
+  let ok1=true, ok2=true;
+  if(p1) ok1 = buildPianoFit(p1);
+  if(p2) ok2 = buildPianoFit(p2);
   updatePianoHighlights();
+  return ok1 && ok2;
+}
+function rebuildPianosDeferred(){
+  // ✅ 描画後に再生成（clientHeight=0 対策）
+  requestAnimationFrame(()=>{
+    let tries=0;
+    const loop=()=>{
+      tries++;
+      const ok = rebuildPianosOnce();
+      if(!ok && tries<10){
+        setTimeout(loop, 60);
+      }
+    };
+    loop();
+  });
 }
 
+/* ===================== INIT ===================== */
 function applyStateToControls(){
   document.getElementById('instSel').value = instrument;
   document.getElementById('tuneSel').value = String(tuneOffset);
@@ -1505,17 +1482,12 @@ function init(){
 
   setInstrument(instrument);
 
-  // first piano build (needs layout)
-  rebuildPianos();
-
   updateUI();
   saveStateToHash();
+
+  rebuildPianosDeferred();
 }
-
-window.addEventListener('resize', ()=>{
-  rebuildPianos();
-});
-
+window.addEventListener('resize', rebuildPianosDeferred);
 init();
 </script>
 </body>
