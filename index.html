@@ -368,7 +368,9 @@ select:hover, .btn:hover, input:hover{
    ========================= */
 .mobileWrap{ display:none; } /* IMPORTANT: PCで2枚目の指板が出ないように完全非表示 */
 
-@media (max-width: 900px){
+@media (max-width: 900px){.mPiano .piano{
+  min-height: 60vh;
+}
   :root{
     --cellW: 34px;
     --cellH: 32px;
@@ -854,25 +856,28 @@ function buildBoard(targetBoardId){
 
 /* Piano build: fit whole range into element height (avoid 0-height) */
 function buildPianoFit(pianoEl){
+  function buildPianoFit(pianoEl){
   if(!pianoEl) return;
+
   pianoEl.innerHTML = "";
+
+  // 🔥 強制的に高さを確保（スマホ用）
+  if(pianoEl.clientHeight < 100){
+    pianoEl.style.minHeight = "60vh";
+  }
 
   const h = pianoEl.clientHeight;
   const w = pianoEl.clientWidth;
 
-  // ここが0だと “ピアノ消える” ので、後で再試行する
-  if(h < 60 || w < 40){
-    return false;
-  }
-
   const count = (MAX_MIDI - MIN_MIDI + 1);
-  const stepH = Math.max(5, h / count);
+  const stepH = Math.max(4, h / count);
   const whiteH = stepH;
-  const blackH = stepH * 0.78;
-  const blackW = Math.max(44, w * 0.78);
+  const blackH = stepH * 0.75;
+  const blackW = Math.max(40, w * 0.75);
 
   for(let midi=MIN_MIDI; midi<=MAX_MIDI; midi++){
     const y = (midi - MIN_MIDI) * stepH;
+
     if(!isBlack(midi)){
       const wEl=document.createElement('div');
       wEl.className="key-white";
@@ -892,6 +897,7 @@ function buildPianoFit(pianoEl){
       pianoEl.appendChild(b);
     }
   }
+}
   return true;
 }
 
