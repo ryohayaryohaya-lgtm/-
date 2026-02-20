@@ -361,16 +361,12 @@ select:hover, .btn:hover, input:hover{
 .badge.ng{ opacity:.7; }
 
 /* =========================
-   MOBILE: 3 columns (not fixed)
-   - keep layout concept (left chords / center board / right piano)
-   - but no fixed panels -> board won't be hidden
-   - chord buttons smaller
+   ✅ ここが重要（指板2個問題の対策）
+   PCでは必ず .main、モバイル(タッチ端末)だけ .mobileWrap を表示
    ========================= */
-.mobileWrap{ display:none; } /* IMPORTANT: PCで2枚目の指板が出ないように完全非表示 */
+.mobileWrap{ display:none !important; }
 
-@media (max-width: 900px){.mPiano .piano{
-  min-height: 60vh;
-}
+@media (max-width: 900px) and (hover: none) and (pointer: coarse){
   :root{
     --cellW: 34px;
     --cellH: 32px;
@@ -383,7 +379,7 @@ select:hover, .btn:hover, input:hover{
   .main{ display:none; }
 
   .mobileWrap{
-    display:grid;
+    display:grid !important;
     grid-template-columns: 156px 1fr var(--pW);
     gap: 10px;
     align-items:start;
@@ -419,7 +415,7 @@ select:hover, .btn:hover, input:hover{
   }
   .mChordGrid .cbtn{
     padding: 10px 8px;
-    font-size: 13px;    /* 小さく */
+    font-size: 13px;
     border-radius: 14px;
   }
 
@@ -430,11 +426,12 @@ select:hover, .btn:hover, input:hover{
 
   .mPiano .piano{
     width: var(--pW);
-    height: calc(100vh - 170px); /* 見える高さ確保 */
+    height: calc(100vh - 170px);
+    min-height: 60vh;
   }
 }
 
-@media (max-width: 420px){
+@media (max-width: 420px) and (hover: none) and (pointer: coarse){
   :root{ --pW: 84px; }
   .mobileWrap{ grid-template-columns: 146px 1fr var(--pW); }
 }
@@ -854,20 +851,22 @@ function buildBoard(targetBoardId){
   }
 }
 
-/* Piano build: fit whole range into element height (avoid 0-height) */
+/* ✅ Piano build: fit whole range into element height (avoid 0-height) */
 function buildPianoFit(pianoEl){
-  function buildPianoFit(pianoEl){
-  if(!pianoEl) return;
+  if(!pianoEl) return false;
 
   pianoEl.innerHTML = "";
 
-  // 🔥 強制的に高さを確保（スマホ用）
+  // 🔥 強制的に高さを確保（主にスマホ/初回描画直後）
   if(pianoEl.clientHeight < 100){
     pianoEl.style.minHeight = "60vh";
   }
 
   const h = pianoEl.clientHeight;
   const w = pianoEl.clientWidth;
+
+  // まだ高さが取れないなら false（deferredで再試行させる）
+  if(h < 100 || w < 30) return false;
 
   const count = (MAX_MIDI - MIN_MIDI + 1);
   const stepH = Math.max(4, h / count);
@@ -897,7 +896,6 @@ function buildPianoFit(pianoEl){
       pianoEl.appendChild(b);
     }
   }
-}
   return true;
 }
 
