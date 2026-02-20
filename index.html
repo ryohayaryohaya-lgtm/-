@@ -433,7 +433,71 @@ select:hover, .btn:hover, input:hover{
 
 @media (max-width: 420px) and (hover: none) and (pointer: coarse){
   :root{ --pW: 84px; }
-  .mobileWrap{ grid-template-columns: 146px 1fr var(--pW); }
+  .mobileWrap{ grid-template-columns: 146px 1fr var(--pW); }@media (min-width: 901px){
+
+  /* 1) 左右パネルを同じ高さにして、縦を画面にフィット */
+  .main{
+    align-items: stretch;
+    height: calc(100vh - 110px); /* ←上のヘッダー分。合わなければ 90〜140px で調整 */
+  }
+
+  /* 2) panelを縦Flexにして、title以外を全て“残り高さ”に */
+  .panel{
+    display: flex;
+    flex-direction: column;
+    min-height: 0; /* 重要：子のスクロールが効く */
+  }
+  .panel-body{
+    flex: 1;
+    min-height: 0; /* 重要：scrollが潰れない */
+  }
+
+  /* 3) 左：指板+ピアノを同じ高さで並べる */
+  .fret-piano{
+    height: 100%;
+    align-items: stretch;
+  }
+
+  /* 左側（指板）カラムも縦いっぱい */
+  .fret-piano > div:first-child{
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  /* strings-rowは固定、scrollが残り全部 */
+  #stringsRow{
+    flex: 0 0 auto;
+  }
+  #scrollArea{
+    flex: 1;
+    max-height: none; /* 既存の 78vh を無効化 */
+    min-height: 0;
+  }
+
+  /* ピアノは“左の高さ”と完全一致 */
+  #piano{
+    height: 100%;
+    min-height: 0;
+  }
+
+  /* 4) 右（コード一覧）も同じ高さで内部スクロール */
+  .right .panel-body{
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .right .chordlist{
+    flex: 1;
+    max-height: none; /* 既存の 74vh を無効化 */
+    min-height: 0;
+  }
+
+  /* 5) バランス最適化：右を少し細く / 左を広く（好みで調整） */
+  .right{ flex: 0 0 460px; min-width: 460px; }
+  .left{  flex: 1 1 auto; min-width: 780px; }
+}
 }
 </style>
 </head>
